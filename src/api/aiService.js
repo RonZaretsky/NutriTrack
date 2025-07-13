@@ -1,13 +1,21 @@
 // AI Service API for chat functionality
-// Primary provider: OpenAI (best option for nutrition analysis)
+// Uses Supabase Edge Function for secure AI processing
 
 // Configuration
 const AI_CONFIG = {
-  // OpenAI Configuration (Primary)
+  // Supabase Edge Function Configuration (Primary)
+  supabase: {
+    baseURL: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-proxy`,
+    model: 'gpt-4o-mini',
+    maxTokens: 2000,
+    temperature: 0.3
+  },
+  
+  // OpenAI Configuration (Fallback - only for development)
   openai: {
     apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     baseURL: 'https://api.openai.com/v1',
-    model: 'gpt-4o-mini', // Best balance of cost and performance
+    model: 'gpt-4o-mini',
     maxTokens: 2000,
     temperature: 0.3
   },
@@ -33,6 +41,8 @@ class AIService {
   async invokeLLM({ prompt, file_urls, response_json_schema }) {
     try {
       switch (this.provider) {
+        case 'supabase':
+          return await this.supabaseInvoke({ prompt, file_urls, response_json_schema });
         case 'openai':
           return await this.openaiInvoke({ prompt, file_urls, response_json_schema });
         case 'anthropic':
@@ -43,18 +53,55 @@ class AIService {
     } catch (error) {
       console.error('AI Service Error:', error);
       
-      // Try fallback provider if available
-      if (this.provider === 'openai' && AI_CONFIG.anthropic.apiKey) {
-        console.log('🔄 Trying Anthropic as fallback...');
-        const fallbackService = new AIService('anthropic');
-        return await fallbackService.invokeLLM({ prompt, file_urls, response_json_schema });
+      // Try fallback providers if available
+      if (this.provider === 'supabase') {
+        // Try OpenAI as fallback if in development
+        if (import.meta.env.DEV && AI_CONFIG.openai.apiKey) {
+          console.log('🔄 Trying OpenAI as fallback...');
+          const fallbackService = new AIService('openai');
+          return await fallbackService.invokeLLM({ prompt, file_urls, response_json_schema });
+        }
+        // Try Anthropic as fallback
+        if (AI_CONFIG.anthropic.apiKey) {
+          console.log('🔄 Trying Anthropic as fallback...');
+          const fallbackService = new AIService('anthropic');
+          return await fallbackService.invokeLLM({ prompt, file_urls, response_json_schema });
+        }
       }
       
       throw new Error(`AI service failed: ${error.message}`);
     }
   }
 
-  // OpenAI implementation (Primary)
+  // Supabase Edge Function implementation (Primary - Production)
+  async supabaseInvoke({ prompt, file_urls, response_json_schema }) {
+    if (!import.meta.env.VITE_SUPABASE_URL) {
+      throw new Error('Supabase URL not configured. Please add VITE_SUPABASE_URL to your .env file');
+    }
+
+    const { supabase } = await import('./supabaseClient.js');
+    
+    const response = await supabase.functions.invoke('ai-proxy', {
+      body: {
+        prompt,
+        file_urls,
+        response_json_schema,
+        model: this.config.model
+      }
+    });
+
+    if (response.error) {
+      throw new Error(`Supabase Edge Function error: ${response.error.message}`);
+    }
+
+    if (!response.data.success) {
+      throw new Error(`AI service error: ${response.data.error}`);
+    }
+
+    return response.data.data;
+  }
+
+  // OpenAI implementation (Fallback - Development only)
   async openaiInvoke({ prompt, file_urls, response_json_schema }) {
     if (!this.config.apiKey) {
       throw new Error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your .env file');
@@ -219,15 +266,28 @@ class AIService {
   // Get available providers
   static getAvailableProviders() {
     const providers = [];
+    if (import.meta.env.VITE_SUPABASE_URL) providers.push('supabase');
     if (AI_CONFIG.openai.apiKey) providers.push('openai');
     if (AI_CONFIG.anthropic.apiKey) providers.push('anthropic');
     return providers;
   }
 }
 
-// Create default instance (OpenAI preferred)
+// Create default instance (Supabase preferred for production, OpenAI for development)
 const availableProviders = AIService.getAvailableProviders();
-const defaultProvider = availableProviders.includes('openai') ? 'openai' : availableProviders[0] || 'openai';
+let defaultProvider;
+
+if (import.meta.env.DEV && availableProviders.includes('openai')) {
+  // Use OpenAI directly in development if available
+  defaultProvider = 'openai';
+} else if (availableProviders.includes('supabase')) {
+  // Use Supabase Edge Function in production
+  defaultProvider = 'supabase';
+} else {
+  // Fallback to any available provider
+  defaultProvider = availableProviders[0] || 'supabase';
+}
+
 const defaultAI = new AIService(defaultProvider);
 
 // Export functions for backward compatibility

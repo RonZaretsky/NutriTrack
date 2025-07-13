@@ -103,6 +103,7 @@ VITE_CLOUDINARY_UPLOAD_PRESET=your_cloudinary_upload_preset
 ```bash
 VITE_APP_ENV=development|staging|production
 VITE_DEMO_MODE=true|false
+VITE_OPENAI_API_KEY=your_openai_api_key  # Only needed for development
 ```
 
 ## Database Setup
@@ -111,6 +112,22 @@ VITE_DEMO_MODE=true|false
 1. Create a new Supabase project for development
 2. Update `env.development` with your dev project credentials
 3. Run migrations and seed data
+
+## AI Service Setup
+
+### Supabase Edge Function (Production)
+1. Deploy the AI proxy function to your Supabase project:
+   ```bash
+   supabase functions deploy ai-proxy
+   ```
+2. Set the OpenAI API key in your Supabase project:
+   ```bash
+   supabase secrets set OPENAI_API_KEY=your_openai_api_key
+   ```
+
+### Development AI Setup
+1. For local development, you can use OpenAI directly by setting `VITE_OPENAI_API_KEY`
+2. For production, the AI requests go through the secure Supabase Edge Function
 
 ### Staging Database
 1. Create a new Supabase project for staging
