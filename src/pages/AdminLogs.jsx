@@ -7,19 +7,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Server, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext"; // Add this import
 
 export default function AdminLogs() {
   const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useAuth(); // Use AuthContext instead
 
   useEffect(() => {
     const checkPermissionsAndLoad = async () => {
       try {
-        const currentUser = await userApi.me();
-        if (currentUser.role === 'admin') {
-          setIsAdmin(true);
+        // Use AuthContext instead of userApi.me()
+        if (isAdmin) {
           const fetchedLogs = await appLogApi.getAll(100); // Fetch last 100 logs
           setLogs(fetchedLogs);
         } else {
@@ -35,8 +35,8 @@ export default function AdminLogs() {
     };
 
     checkPermissionsAndLoad();
-  }, [navigate]);
-  
+  }, [navigate, isAdmin]); // Add isAdmin to dependencies
+
   const getBadgeVariant = (level) => {
     switch (level) {
       case 'ERROR': return 'destructive';

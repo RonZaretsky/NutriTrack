@@ -7,20 +7,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { useAuth } from '@/contexts/AuthContext'; // Add this import
 
 export default function AdminUsers() {
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
+    const { isAdmin } = useAuth(); // Use AuthContext instead
 
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const currentUser = await userApi.me();
-                if (currentUser.role !== 'admin') {
+                // Use AuthContext instead of userApi.me()
+                if (!isAdmin) {
+                    console.log('User is not admin, redirecting to dashboard');
                     navigate(createPageUrl("Dashboard"));
                     return;
                 }
+
+                console.log('User is admin, fetching all users');
                 const allUsers = await userApi.getAll();
                 setUsers(allUsers);
             } catch (error) {
@@ -31,7 +36,7 @@ export default function AdminUsers() {
             }
         };
         fetchUsers();
-    }, [navigate]);
+    }, [navigate, isAdmin]); // Add isAdmin to dependencies
 
     const handleRoleChange = async (userId, newRoleValue) => {
         try {
@@ -45,10 +50,10 @@ export default function AdminUsers() {
             }
 
             await userApi.update(userId, updateData);
-            setUsers(prevUsers => prevUsers.map(user => 
+            setUsers(prevUsers => prevUsers.map(user =>
                 user.id === userId ? { ...user, ...updateData } : user
             ));
-            
+
             // Trigger role update event for real-time UI updates
             window.dispatchEvent(new CustomEvent('userRoleUpdated'));
         } catch (error) {

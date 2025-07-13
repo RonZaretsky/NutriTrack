@@ -28,7 +28,7 @@ export default function ProfileSummary({ user, userProfile, onEditGoals, onProfi
   // Initialize display name from userProfile, falling back to user's full_name
   useEffect(() => {
     if (userProfile || user) {
-        setDisplayName(userProfile?.display_name || user?.full_name || '');
+      setDisplayName(userProfile?.display_name || user?.full_name || '');
     }
   }, [user, userProfile]);
 
@@ -42,7 +42,7 @@ export default function ProfileSummary({ user, userProfile, onEditGoals, onProfi
 
           // Try to get coach details from UserProfile first (for display_name)
           const coachProfiles = await userProfileApi.filter({ created_by: userProfile.coach_email });
-          
+
           if (coachProfiles.length > 0 && coachProfiles[0].display_name) {
             coachName = coachProfiles[0].display_name; // Use updated display name from their profile
           } else {
@@ -52,7 +52,7 @@ export default function ProfileSummary({ user, userProfile, onEditGoals, onProfi
               coachName = coachUsers[0].full_name; // Use full_name from User entity
             }
           }
-          
+
           setCoachDetails({
             email: coachEmail,
             name: coachName
@@ -80,9 +80,9 @@ export default function ProfileSummary({ user, userProfile, onEditGoals, onProfi
       setIsEditingName(false);
       return;
     }
-    
+
     logEvent('ProfileSummary', 'SAVE_NAME_ATTEMPT', { newName: newDisplayName });
-    
+
     try {
       // Update the display_name in UserProfile
       // Ensure userProfile.id exists before attempting to update
@@ -90,7 +90,7 @@ export default function ProfileSummary({ user, userProfile, onEditGoals, onProfi
         await userProfileApi.update(userProfile.id, { display_name: newDisplayName });
         logEvent('ProfileSummary', 'SAVE_NAME_SUCCESS', { newName: newDisplayName });
         // Call onProfileUpdate to refresh data in the parent component
-        onProfileUpdate(); 
+        onProfileUpdate();
         setIsEditingName(false);
       } else {
         throw new Error("UserProfile ID is missing, cannot save name.");
@@ -103,27 +103,27 @@ export default function ProfileSummary({ user, userProfile, onEditGoals, onProfi
       // setDisplayName(userProfile?.display_name || user?.full_name || ''); 
     }
   };
-  
+
   const handleDisconnectCoach = async () => {
     if (confirm("האם אתה בטוח שברצונך להתנתק מהמאמן?")) {
-        logEvent('ProfileSummary', 'DISCONNECT_COACH_INITIATED');
-        try {
-                    // Assuming UserProfile is an entity with an update method
+      logEvent('ProfileSummary', 'DISCONNECT_COACH_INITIATED');
+      try {
+        // Only update coach_email, remove coach_name since the column doesn't exist
         if (userProfile?.id) {
           await userProfileApi.update(userProfile.id, {
-              coach_email: null,
-              coach_name: null
+            coach_email: null
+            // Remove coach_name: null - this column doesn't exist
           });
           onProfileUpdate(); // Refresh profile data after update
           logEvent('ProfileSummary', 'DISCONNECT_COACH_SUCCESS');
         } else {
           throw new Error("UserProfile ID is missing, cannot disconnect coach.");
         }
-        } catch (error) {
-            logEvent('ProfileSummary', 'DISCONNECT_COACH_ERROR', { error: error.message }, 'ERROR');
-            console.error("Failed to disconnect from coach", error);
-            alert("שגיאה בהתנתקות מהמאמן. אנא נסה שוב.");
-        }
+      } catch (error) {
+        logEvent('ProfileSummary', 'DISCONNECT_COACH_ERROR', { error: error.message }, 'ERROR');
+        console.error("Failed to disconnect from coach", error);
+        alert("שגיאה בהתנתקות מהמאמן. אנא נסה שוב.");
+      }
     }
   };
 
@@ -183,21 +183,21 @@ export default function ProfileSummary({ user, userProfile, onEditGoals, onProfi
 
         {/* Coach Info */}
         {coachDetails && (
-            <Card className="glass-effect shadow-lg bg-purple-50 border-purple-200">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-purple-800"><HeartHandshake /> המאמן/ת שלך</CardTitle>
-                </CardHeader>
-                <CardContent className="flex justify-between items-center">
-                    <div>
-                        <p className="font-semibold text-lg">{coachDetails.name}</p>
-                        <p className="text-sm text-purple-700">{coachDetails.email}</p>
-                    </div>
-                    <Button variant="destructive" size="sm" onClick={handleDisconnectCoach}>
-                        <UserX className="w-4 h-4 ml-2" />
-                        התנתק מהמאמן
-                    </Button>
-                </CardContent>
-            </Card>
+          <Card className="glass-effect shadow-lg bg-purple-50 border-purple-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-purple-800"><HeartHandshake /> המאמן/ת שלך</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-between items-center">
+              <div>
+                <p className="font-semibold text-lg">{coachDetails.name}</p>
+                <p className="text-sm text-purple-700">{coachDetails.email}</p>
+              </div>
+              <Button variant="destructive" size="sm" onClick={handleDisconnectCoach}>
+                <UserX className="w-4 h-4 ml-2" />
+                התנתק מהמאמן
+              </Button>
+            </CardContent>
+          </Card>
         )}
 
         <Card className="glass-effect shadow-lg">
@@ -225,83 +225,83 @@ export default function ProfileSummary({ user, userProfile, onEditGoals, onProfi
             {userProfile.goal !== 'maintain' && <div className="flex items-center gap-3"><TrendingUp className="w-5 h-5 text-green-500" /><div><div className="text-sm text-slate-600">קצב רצוי</div><div className="font-semibold">{userProfile.target_rate} ק"ג לחודש</div></div></div>}
           </CardContent>
         </Card>
-        
+
         <Card className="glass-effect shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Flame />יעד קלוריות</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center p-6 bg-gradient-to-r from-blue-50 to-green-50 rounded-xl">
-                <h4 className="font-bold text-xl text-slate-900 mb-2">היעד הקלורי היומי שלך</h4>
-                <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                  {userProfile.daily_calories}
+              <h4 className="font-bold text-xl text-slate-900 mb-2">היעד הקלורי היומי שלך</h4>
+              <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                {userProfile.daily_calories}
+              </div>
+              <p className="text-slate-600 mt-2">קלוריות ביום</p>
+              <div className="grid grid-cols-2 gap-4 mt-6 text-sm">
+                <div>
+                  <p className="text-slate-600">BMR</p>
+                  <p className="font-semibold text-lg">{userProfile.bmr}</p>
                 </div>
-                <p className="text-slate-600 mt-2">קלוריות ביום</p>
-                <div className="grid grid-cols-2 gap-4 mt-6 text-sm">
-                  <div>
-                    <p className="text-slate-600">BMR</p>
-                    <p className="font-semibold text-lg">{userProfile.bmr}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-600">TDEE</p>
-                    <p className="font-semibold text-lg">{userProfile.tdee}</p>
-                  </div>
+                <div>
+                  <p className="text-slate-600">TDEE</p>
+                  <p className="font-semibold text-lg">{userProfile.tdee}</p>
                 </div>
-                {userProfile.body_fat_percentage && (
-                  <div className="text-xs text-green-700 mt-4 bg-green-100 p-2 rounded-lg flex items-center justify-center gap-2">
-                    <span>✓ חושב עם נוסחת Katch-McArdle (מדויק יותר)</span>
-                    <Dialog open={isExplanationModalOpen} onOpenChange={setIsExplanationModalOpen}>
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full hover:bg-green-200" onClick={() => setIsExplanationModalOpen(true)}>
-                           <Info className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-md" dir="rtl">
-                        <DialogHeader>
-                          <DialogTitle className="flex items-center gap-2 text-slate-900">
-                            <BrainCircuit className="w-6 h-6 text-blue-500" />
-                            חישוב קלוריות מדויק
-                          </DialogTitle>
-                          <DialogDescription className="text-right pt-2">
-                            הסבר על נוסחת החישוב המתקדמת
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4 text-slate-700">
-                          <p>
-                            מחשבון הקלוריות שלנו השתמש ב<strong>נוסחת Katch-McArdle</strong> כדי לחשב את היעד שלך.
-                          </p>
-                          <div className="p-3 bg-slate-50 rounded-lg">
-                            <h4 className="font-semibold mb-2">למה זה מדויק יותר?</h4>
-                            <ul className="list-disc list-inside space-y-2 text-sm">
-                              <li>
-                                נוסחה זו משתמשת בנתון שהזנת - <strong>אחוז השומן</strong> - כדי לחשב את <strong>"מסת הגוף הרזה"</strong> שלך (שרירים, עצמות, איברים), בניגוד לנוסחאות רגילות המבוססות על משקל כללי.
-                              </li>
-                              <li>
-                                רקמת שריר שורפת יותר קלוריות משומן. לכן, התבססות על מסת הגוף הרזה נותנת הערכה קלורית אישית ומדויקת הרבה יותר.
-                              </li>
-                            </ul>
-                          </div>
-                          <p className="mt-2 font-semibold text-green-700">
-                             בקיצור: היעד הקלורי שלך מותאם אישית להרכב הגוף הייחודי שלך!
-                          </p>
+              </div>
+              {userProfile.body_fat_percentage && (
+                <div className="text-xs text-green-700 mt-4 bg-green-100 p-2 rounded-lg flex items-center justify-center gap-2">
+                  <span>✓ חושב עם נוסחת Katch-McArdle (מדויק יותר)</span>
+                  <Dialog open={isExplanationModalOpen} onOpenChange={setIsExplanationModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full hover:bg-green-200" onClick={() => setIsExplanationModalOpen(true)}>
+                        <Info className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md" dir="rtl">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-slate-900">
+                          <BrainCircuit className="w-6 h-6 text-blue-500" />
+                          חישוב קלוריות מדויק
+                        </DialogTitle>
+                        <DialogDescription className="text-right pt-2">
+                          הסבר על נוסחת החישוב המתקדמת
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4 text-slate-700">
+                        <p>
+                          מחשבון הקלוריות שלנו השתמש ב<strong>נוסחת Katch-McArdle</strong> כדי לחשב את היעד שלך.
+                        </p>
+                        <div className="p-3 bg-slate-50 rounded-lg">
+                          <h4 className="font-semibold mb-2">למה זה מדויק יותר?</h4>
+                          <ul className="list-disc list-inside space-y-2 text-sm">
+                            <li>
+                              נוסחה זו משתמשת בנתון שהזנת - <strong>אחוז השומן</strong> - כדי לחשב את <strong>"מסת הגוף הרזה"</strong> שלך (שרירים, עצמות, איברים), בניגוד לנוסחאות רגילות המבוססות על משקל כללי.
+                            </li>
+                            <li>
+                              רקמת שריר שורפת יותר קלוריות משומן. לכן, התבססות על מסת הגוף הרזה נותנת הערכה קלורית אישית ומדויקת הרבה יותר.
+                            </li>
+                          </ul>
                         </div>
-                        <DialogFooter>
-                          <DialogClose asChild>
-                            <Button type="button" className="w-full">הבנתי, תודה!</Button>
-                          </DialogClose>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                )}
+                        <p className="mt-2 font-semibold text-green-700">
+                          בקיצור: היעד הקלורי שלך מותאם אישית להרכב הגוף הייחודי שלך!
+                        </p>
+                      </div>
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button type="button" className="w-full">הבנתי, תודה!</Button>
+                        </DialogClose>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
 
         <div className="text-center pt-4">
-          <Button 
-            size="lg" 
-            onClick={onEditGoals} 
+          <Button
+            size="lg"
+            onClick={onEditGoals}
             className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white shadow-lg"
           >
             הגדר מטרות מחדש

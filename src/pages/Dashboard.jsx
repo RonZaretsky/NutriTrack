@@ -12,8 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Target, 
+import {
+  Target,
   Apple,
   Scale,
   Barcode,
@@ -38,7 +38,7 @@ export default function Dashboard() {
   const [todaysEntries, setTodaysEntries] = useState([]);
   const [plannedCalories, setPlannedCalories] = useState(0); // New state for planned calories
   const [isLoading, setIsLoading] = useState(false); // Start with false since we wait for auth
-  
+
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [weightUpdatedToday, setWeightUpdatedToday] = useState(false);
   const [newWeight, setNewWeight] = useState("");
@@ -56,7 +56,7 @@ export default function Dashboard() {
   useEffect(() => {
     // Create a unique auth state identifier
     const currentAuthState = `${authLoading}-${isAuthenticated}-${userRole}`;
-    
+
     // Skip if auth state hasn't changed
     if (lastAuthStateRef.current === currentAuthState) {
       return;
@@ -115,31 +115,31 @@ export default function Dashboard() {
 
   const loadData = async () => {
     console.log('Dashboard - Starting loadData');
-    
+
     // Prevent multiple simultaneous calls
     if (isLoading) {
       console.log('Dashboard - Already loading, skipping');
       return;
     }
-    
+
     // Don't load data if user is not authenticated
     if (!isAuthenticated) {
       console.log('Dashboard - User not authenticated, skipping loadData');
       return;
     }
-    
+
     // Don't load data if auth is still loading
     if (authLoading) {
       console.log('Dashboard - Auth still loading, skipping loadData');
       return;
     }
-    
+
     // Don't load data if user role is not available yet
     if (!userRole) {
       console.log('Dashboard - User role not available yet, skipping loadData');
       return;
     }
-    
+
     setIsLoading(true);
     setError(null); // Clear any previous errors
     try {
@@ -159,7 +159,7 @@ export default function Dashboard() {
         // If profile fetch fails, create a default profile
         profiles = [];
       }
-      
+
       if (profiles.length === 0 || !profiles[0].setup_completed) {
         console.log('Dashboard - No profile or setup not completed, redirecting to Profile');
         navigate(createPageUrl("Profile"));
@@ -171,15 +171,15 @@ export default function Dashboard() {
       // Fetch all data in parallel with timeouts
       const today = format(new Date(), 'yyyy-MM-dd');
       console.log('Dashboard - Fetching all data in parallel for:', today);
-      
+
       // Show loading progress
       setError(null);
-      
+
       // Create promises with timeouts
       const createTimeoutPromise = (promise, timeoutMs = 5000) => {
         return Promise.race([
           promise,
-          new Promise((_, reject) => 
+          new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Timeout')), timeoutMs)
           )
         ]);
@@ -234,12 +234,12 @@ export default function Dashboard() {
     if (!newWeight || !userProfile) return;
     const weightValue = parseFloat(newWeight);
     if (isNaN(weightValue)) return;
-    
+
     logEvent('Dashboard', 'CLICK_UPDATE_WEIGHT', { weight: weightValue });
 
     try {
       const todayStr = format(new Date(), 'yyyy-MM-dd');
-      
+
       // Check if weight entry already exists for today
       const existingEntries = await weightEntryApi.filter({
         created_by: userProfile.created_by || user.email,
@@ -265,7 +265,7 @@ export default function Dashboard() {
       console.error("Error updating weight:", error);
     }
   };
-  
+
   const handleDeleteEntry = async (entryId) => {
     logEvent('Dashboard', 'ATTEMPT_DELETE_FOOD_ENTRY', { entryId });
     if (confirm("האם אתה בטוח שברצונך למחוק את הפריט הזה?")) {
@@ -302,7 +302,7 @@ export default function Dashboard() {
 
   const handleBarcodeScanned = async (foodData) => {
     logEvent('Dashboard', 'BARCODE_SCANNED', { foodName: foodData.name, barcode: foodData.barcode });
-    
+
     // Close the scanner modal
     setShowBarcodeScanner(false);
 
@@ -310,7 +310,7 @@ export default function Dashboard() {
     const today = format(new Date(), 'yyyy-MM-dd');
     const { chatMessageApi } = await import('@/api/chatMessageApi');
     const { chatStateApi } = await import('@/api/chatStateApi');
-    
+
     // Create AI message with food data
     const aiResponse = `🎯 מצאתי את המוצר: **${foodData.name}**
 
@@ -323,80 +323,62 @@ export default function Dashboard() {
 ❓ כמה גרם אכלת מהמוצר הזה?`;
 
     const aiChatMessage = await chatMessageApi.create({
-        message: aiResponse,
-        sender: "ai",
-        chat_date: today,
-        created_by: user.email,
-        structured_data: JSON.stringify({
-          text_response: aiResponse,
-          summary: {
-              calories: foodData.calories,
-              protein: foodData.protein,
-              carbs: foodData.carbs,
-              fat: foodData.fat,
-              meal_type: "snack" // Default to snack, user can change later if needed
-          },
-          foods: [{
-            name: foodData.name,
-            calories: foodData.calories,
-            protein: foodData.protein,
-            carbs: foodData.carbs,
-            fat: foodData.fat,
-            category: "other" // Default category
-          }]
-        })
+      message: aiResponse,
+      sender: "ai",
+      chat_date: today,
+      created_by: user.email,
+      structured_data: JSON.stringify({
+        text_response: aiResponse,
+        summary: {
+          calories: foodData.calories,
+          protein: foodData.protein,
+          carbs: foodData.carbs,
+          fat: foodData.fat,
+          meal_type: "snack" // Default to snack, user can change later if needed
+        },
+        foods: [{
+          name: foodData.name,
+          calories: foodData.calories,
+          protein: foodData.protein,
+          carbs: foodData.carbs,
+          fat: foodData.fat,
+          category: "other" // Default category
+        }]
+      })
     });
 
     // Save state for quantity input
     await chatStateApi.create({
-        user_email: user.email,
-        state_type: 'waiting_for_quantity',
-        food_data: JSON.stringify(foodData),
-        barcode: foodData.barcode,
-        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes
+      user_email: user.email,
+      state_type: 'waiting_for_quantity',
+      food_data: JSON.stringify(foodData),
+      barcode: foodData.barcode,
+      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes
     });
 
     // Trigger chat to open and refresh
-    window.dispatchEvent(new CustomEvent('openChatWithMessage', { 
+    window.dispatchEvent(new CustomEvent('openChatWithMessage', {
       detail: { message: aiChatMessage }
     }));
   };
 
   const handleCoachRequest = async (request, accept) => {
     try {
-        if (accept) {
-            // Get the most up-to-date coach name before accepting
-            let coachName = request.coach_name; // Fallback
-            
-            try {
-                          // Try to get updated name from UserProfile first
-            const coachProfiles = await userProfileApi.filter({ created_by: request.coach_email });
-            if (coachProfiles.length > 0 && coachProfiles[0].display_name) {
-              coachName = coachProfiles[0].display_name;
-                        } else {
-                // If no UserProfile display_name, get from User entity
-                const coachUsers = await userApi.filter({ email: request.coach_email });
-                if (coachUsers.length > 0 && coachUsers[0].full_name) {
-                  coachName = coachUsers[0].full_name;
-                }
-              }
-            } catch (error) {
-              console.warn("Could not fetch updated coach name, using stored name: ", error);
-            }
-
-            await userProfileApi.update(userProfile.id, {
-                coach_email: request.coach_email,
-                coach_name: coachName // Use the most current name
-            });
-            logEvent('Dashboard', 'COACH_REQUEST_ACCEPTED', { coach_email: request.coach_email });
-        } else {
-            logEvent('Dashboard', 'COACH_REQUEST_DECLINED', { coach_email: request.coach_email });
-        }
-        await coachRequestApi.delete(request.id);
-        loadData(); // Refresh data
+      if (accept) {
+        // Only update coach_email, remove coach_name since the column doesn't exist
+        await userProfileApi.update(userProfile.id, {
+          coach_email: request.coach_email
+          // Remove coach_name: coachName - this column doesn't exist
+        });
+        logEvent('Dashboard', 'COACH_REQUEST_ACCEPTED', { coach_email: request.coach_email });
+      } else {
+        logEvent('Dashboard', 'COACH_REQUEST_DECLINED', { coach_email: request.coach_email });
+      }
+      await coachRequestApi.delete(request.id);
+      loadData(); // Refresh data
     } catch (error) {
-        logEvent('Dashboard', 'ERROR_HANDLING_COACH_REQUEST', { error: error.message }, 'ERROR');
-        console.error("Error handling coach request", error);
+      logEvent('Dashboard', 'ERROR_HANDLING_COACH_REQUEST', { error: error.message }, 'ERROR');
+      console.error("Error handling coach request", error);
     }
   };
 
@@ -473,48 +455,48 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      
+
       <div className="p-4 md:p-8 pt-0">
         {/* Coach Requests */}
         {coachRequests.length > 0 && coachRequests.map(request => (
-            <Card key={request.id} className="glass-effect shadow-lg mb-8 border-r-4 border-r-purple-500">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                        <UserPlus className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg text-slate-900">
-                          בקשת אימון חדשה!
-                        </h3>
-                        <p className="text-slate-600">
-                          המאמן <span className="font-medium">{request.coach_name}</span> רוצה לאמן אותך.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-3">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCoachRequest(request, false)}
-                        className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        דחה
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleCoachRequest(request, true)}
-                        className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white"
-                      >
-                        <Check className="w-4 h-4 mr-2" />
-                        אשר
-                      </Button>
-                    </div>
+          <Card key={request.id} className="glass-effect shadow-lg mb-8 border-r-4 border-r-purple-500">
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                    <UserPlus className="w-6 h-6 text-white" />
                   </div>
-                </CardContent>
-            </Card>
+                  <div>
+                    <h3 className="font-semibold text-lg text-slate-900">
+                      בקשת אימון חדשה!
+                    </h3>
+                    <p className="text-slate-600">
+                      המאמן <span className="font-medium">{request.coach_name}</span> רוצה לאמן אותך.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleCoachRequest(request, false)}
+                    className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    דחה
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleCoachRequest(request, true)}
+                    className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white"
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    אשר
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         ))}
 
         {/* Basic Stats */}
@@ -577,7 +559,7 @@ export default function Dashboard() {
               <div className="space-y-3">
                 <AnimatePresence>
                   {todaysEntries.map((entry) => (
-                    <motion.div 
+                    <motion.div
                       key={entry.id}
                       layout
                       initial={{ opacity: 0, y: -20 }}

@@ -7,11 +7,11 @@ export const userApi = {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error) throw error;
-      
+
       if (!user) {
         throw new Error('No authenticated user');
       }
-      
+
       // Return auth user data directly to avoid RLS issues
       return {
         id: user.id,
@@ -36,7 +36,7 @@ export const userApi = {
         .select('*')
         .eq('email', email)
         .single();
-      
+
       if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
       return data || null;
     } catch (error) {
@@ -48,18 +48,30 @@ export const userApi = {
   // Get all users (for admin use)
   async getAll() {
     try {
-      // First check if current user is admin
-      const currentUser = await this.me();
-      if (currentUser.role !== 'admin') {
+      // Get user data directly from users table instead of userApi.me()
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('No authenticated user');
+        return [];
+      }
+
+      // Check admin status directly from users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (userError || userData?.role !== 'admin') {
         console.log('Non-admin user cannot fetch all users');
         return [];
       }
-      
+
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       return data || [];
     } catch (error) {
@@ -76,7 +88,7 @@ export const userApi = {
         .insert([userData])
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     } catch (error) {
@@ -94,7 +106,7 @@ export const userApi = {
         .eq('id', id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     } catch (error) {
@@ -110,7 +122,7 @@ export const userApi = {
         .from('users')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
       return true;
     } catch (error) {
@@ -123,7 +135,7 @@ export const userApi = {
   async filter(filters = {}) {
     try {
       let query = supabase.from('users').select('*');
-      
+
       // Apply filters
       if (filters.email) {
         query = query.eq('email', filters.email);
@@ -134,12 +146,12 @@ export const userApi = {
       if (filters.is_coach !== undefined) {
         query = query.eq('is_coach', filters.is_coach);
       }
-      
+
       // Add ordering
       query = query.order('created_at', { ascending: false });
-      
+
       const { data, error } = await query;
-      
+
       if (error) throw error;
       return data || [];
     } catch (error) {

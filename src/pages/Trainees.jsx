@@ -17,6 +17,7 @@ import { format, subDays, addDays, isToday } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { getPlannedCaloriesForDate } from '@/components/utils/weeklyPlanUtils';
 import { getFoodEntriesByUserAndDate } from '@/api/foodEntryApi';
+import { useAuth } from '@/contexts/AuthContext'; // Add this import
 
 export default function TraineesPage() {
     const navigate = useNavigate();
@@ -27,7 +28,9 @@ export default function TraineesPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newTraineeEmail, setNewTraineeEmail] = useState('');
     const [requestStatus, setRequestStatus] = useState({ loading: false, error: null, success: null });
-    
+
+    const { isCoach, isAdmin } = useAuth(); // Use AuthContext instead
+
     // Removed states related to meals and graph modals
 
     // Removed mealTypeTranslations as it's no longer used
@@ -36,15 +39,16 @@ export default function TraineesPage() {
         const loadData = async () => {
             setIsLoading(true);
             try {
-                const currentCoach = await userApi.me();
-                
-                // Check if user is actually a coach OR admin
-                const isCoachOrAdmin = currentCoach.is_coach || currentCoach.role === 'admin';
+                // Check if user is actually a coach OR admin using AuthContext
+                const isCoachOrAdmin = isCoach || isAdmin;
                 if (!isCoachOrAdmin) {
+                    console.log('User is not coach or admin, redirecting to dashboard');
                     navigate(createPageUrl("Dashboard"));
                     return;
                 }
-                
+
+                // Get current user data for coach operations
+                const currentCoach = await userApi.me();
                 setCoach(currentCoach);
                 logEvent('TraineesPage', 'PAGE_LOAD', { coach: currentCoach.email, date: selectedDate });
 
@@ -54,7 +58,7 @@ export default function TraineesPage() {
                 const traineesWithData = await Promise.all(traineeProfiles.map(async (profile) => {
                     const foodEntries = await getFoodEntriesByUserAndDate(profile.created_by, dateStr);
                     const totalCalories = foodEntries.reduce((sum, entry) => sum + entry.calories, 0);
-                    
+
                     // Get dynamic planned calories for the selected date
                     const plannedCalories = await getPlannedCaloriesForDate(profile.created_by, selectedDate);
 
@@ -67,8 +71,8 @@ export default function TraineesPage() {
                                 fullName = userInfo[0].full_name; // Priority 2: Original name
                             }
                         } catch (error) {
-                           console.warn(`Failed to fetch full name for ${profile.created_by}:`, error);
-                           logEvent('TraineesPage', 'FETCH_FULL_NAME_ERROR', { email: profile.created_by, error: error.message }, 'WARN');
+                            console.warn(`Failed to fetch full name for ${profile.created_by}:`, error);
+                            logEvent('TraineesPage', 'FETCH_FULL_NAME_ERROR', { email: profile.created_by, error: error.message }, 'WARN');
                         }
                     }
 
@@ -92,7 +96,7 @@ export default function TraineesPage() {
             }
         };
         loadData();
-    }, [navigate, selectedDate]);
+    }, [navigate, selectedDate, isCoach, isAdmin]); // Add isCoach and isAdmin to dependencies
 
     const handleSendRequest = async () => {
         if (!newTraineeEmail.trim() || !coach) return;
@@ -106,13 +110,13 @@ export default function TraineesPage() {
             if (traineeEmail === coach.email) {
                 throw new Error("אינך יכול להוסיף את עצמך כמתאמן.");
             }
-            
+
             // Check if a UserProfile exists for the given email. This confirms the user exists and has a profile.
             const traineeProfiles = await userProfileApi.filter({ created_by: traineeEmail });
             if (traineeProfiles.length === 0) {
                 throw new Error("לא נמצא משתמש עם מייל זה, או שהמשתמש עדיין לא השלים את הגדרת הפרופיל.");
             }
-            
+
             const traineeProfile = traineeProfiles[0];
             if (traineeProfile.coach_email) {
                 throw new Error("למתאמן זה כבר משויך מאמן.");
@@ -123,8 +127,8 @@ export default function TraineesPage() {
             if (existingRequests.length > 0) {
                 // Check if the request is from the *same* coach
                 const requestFromThisCoach = existingRequests.find(req => req.coach_email === coach.email);
-                if(requestFromThisCoach) {
-                  throw new Error("כבר שלחת בקשה למתאמן זה.");
+                if (requestFromThisCoach) {
+                    throw new Error("כבר שלחת בקשה למתאמן זה.");
                 }
                 // If another coach sent a request, prevent sending a new one for now.
                 throw new Error("כבר קיימת בקשה למתאמן זה ממאמן אחר.");
@@ -185,7 +189,7 @@ export default function TraineesPage() {
                         הוסף מתאמן חדש
                     </Button>
                 </div>
-                
+
                 <div className="flex items-center justify-center gap-4 mb-8">
                     <Button variant="outline" size="icon" onClick={handlePreviousDay}>
                         <ChevronRight className="w-4 h-4" />
@@ -211,8 +215,8 @@ export default function TraineesPage() {
                             const targetCalories = trainee.plannedCalories > 0 ? trainee.plannedCalories : trainee.daily_calories;
                             const progressValue = targetCalories > 0 ? (trainee.totalCalories / targetCalories) * 100 : 0;
                             return (
-                                <Card 
-                                    key={trainee.id} 
+                                <Card
+                                    key={trainee.id}
                                     className="glass-effect shadow-lg cursor-pointer hover:shadow-xl transition-shadow duration-200"
                                     onClick={() => handleTraineeClick(trainee)}
                                 >
@@ -259,7 +263,7 @@ export default function TraineesPage() {
                             value={newTraineeEmail}
                             onChange={(e) => setNewTraineeEmail(e.target.value)}
                         />
-                        {requestStatus.error && <p className="text-red-500 text-sm flex items-center gap-2"><AlertCircle className="w-4 h-4"/>{requestStatus.error}</p>}
+                        {requestStatus.error && <p className="text-red-500 text-sm flex items-center gap-2"><AlertCircle className="w-4 h-4" />{requestStatus.error}</p>}
                         {requestStatus.success && <p className="text-green-500 text-sm">{requestStatus.success}</p>}
                     </div>
                     <DialogFooter>
