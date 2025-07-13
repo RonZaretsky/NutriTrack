@@ -29,7 +29,18 @@ export default function AuthCallback() {
         }
 
         if (!accessToken) {
-          console.error('No access token in callback');
+          // Check if user is already authenticated
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            setStatus('success');
+            setMessage('החשבון אומת בהצלחה! מעביר אותך לדשבורד...');
+            setTimeout(() => {
+              navigate('/Dashboard');
+            }, 2000);
+            return;
+          }
+          // If not authenticated, show error
+          console.error('No access token in callback and no user session');
           setStatus('error');
           setMessage('לא נמצא אסימון גישה');
           return;
