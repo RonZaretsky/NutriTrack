@@ -45,11 +45,20 @@ export const userProfileApi = {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('userProfileApi - Supabase error creating profile:', error);
+        throw error;
+      }
       console.log('userProfileApi - Profile created successfully:', data);
       return data;
     } catch (error) {
       console.error('Error creating user profile:', error);
+      console.error('Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       throw error;
     }
   },
@@ -109,11 +118,20 @@ export const userProfileApi = {
       
       const { data, error } = await withTimeout(query);
       
-      if (error) throw error;
+      if (error) {
+        console.error('userProfileApi - Supabase error filtering profiles:', error);
+        throw error;
+      }
       console.log('userProfileApi - Filter results:', data);
       return data || [];
     } catch (error) {
       console.error('Error filtering user profiles:', error);
+      console.error('Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       // Don't return demo data - throw the error instead
       throw error;
     }

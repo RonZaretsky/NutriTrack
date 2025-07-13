@@ -151,12 +151,33 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
       } else {
         console.log('ProfileWizard - Creating new profile');
         const user = await userApi.me();
-        await userProfileApi.create({ 
-          ...profileData, 
-          display_name: user.full_name,
-          created_by: user.email 
-        });
-        console.log('ProfileWizard - Profile created successfully');
+        
+        // Check if a profile already exists for this user
+        try {
+          const existingProfiles = await userProfileApi.filter({ created_by: user.email });
+          if (existingProfiles.length > 0) {
+            console.log('ProfileWizard - Found existing profile, updating instead:', existingProfiles[0].id);
+            await userProfileApi.update(existingProfiles[0].id, profileData);
+            console.log('ProfileWizard - Existing profile updated successfully');
+          } else {
+            console.log('ProfileWizard - No existing profile found, creating new one');
+            await userProfileApi.create({ 
+              ...profileData, 
+              display_name: user.full_name,
+              created_by: user.email 
+            });
+            console.log('ProfileWizard - Profile created successfully');
+          }
+        } catch (error) {
+          console.error('ProfileWizard - Error checking for existing profiles:', error);
+          // Fallback to creating new profile
+          await userProfileApi.create({ 
+            ...profileData, 
+            display_name: user.full_name,
+            created_by: user.email 
+          });
+          console.log('ProfileWizard - Profile created successfully (fallback)');
+        }
       }
       
       // Wait for the onSave callback to complete

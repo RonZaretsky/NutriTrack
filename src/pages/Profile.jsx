@@ -28,9 +28,12 @@ export default function Profile() {
 
       const profiles = await userProfileApi.filter({ created_by: currentUser.email });
       console.log('Profile - Found profiles:', profiles);
+      console.log('Profile - Current user email:', currentUser.email);
+      
       if (profiles.length > 0) {
         const profile = profiles[0];
         console.log('Profile - Using profile:', profile);
+        console.log('Profile - Profile setup_completed:', profile.setup_completed);
         setUserProfile(profile);
         if (!profile.setup_completed) {
           console.log('Profile - Setup not completed, showing wizard');
@@ -41,6 +44,7 @@ export default function Profile() {
       } else {
         // No profile exists, force setup
         console.log('Profile - No profile found, showing wizard');
+        console.log('Profile - Searching for profiles with created_by:', currentUser.email);
         setIsEditing(true);
       }
     } catch (error) {
