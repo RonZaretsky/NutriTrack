@@ -25,6 +25,8 @@ export default function AuthChecker({ children, requireAuth = true }) {
   // If authentication is required and user is not authenticated, redirect to login
   if (requireAuth && !isAuthenticated) {
     console.log('AuthChecker - Redirecting to login (not authenticated)');
+    console.log('AuthChecker - Current location:', location.pathname);
+    console.log('AuthChecker - Redirecting to:', '/auth/login');
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 

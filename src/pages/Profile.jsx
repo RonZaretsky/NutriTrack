@@ -48,30 +48,11 @@ export default function Profile() {
         setIsEditing(true);
       }
     } catch (error) {
-      console.log("No authenticated user, using demo profile");
-      // Create mock data for demo mode
-      const mockUser = {
-        email: 'demo@example.com',
-        full_name: 'Demo User'
-      };
-      setUser(mockUser);
-      
-      const mockProfile = {
-        id: 'demo-profile',
-        created_by: 'demo@example.com',
-        display_name: 'Demo User',
-        weight: 70,
-        height: 170,
-        age: 30,
-        gender: 'other',
-        activity_level: 'moderate',
-        daily_calories: 2000,
-        daily_protein: 150,
-        daily_carbs: 200,
-        daily_fat: 65,
-        setup_completed: true
-      };
-      setUserProfile(mockProfile);
+      console.error('Profile - Error loading profile data:', error);
+      // Don't create demo data - let AuthChecker handle unauthenticated users
+      setUser(null);
+      setUserProfile(null);
+      // Don't set isEditing to true if there's an error
     } finally {
       setIsLoading(false);
       console.log('Profile - Profile data loading completed');

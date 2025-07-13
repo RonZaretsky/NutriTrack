@@ -177,6 +177,12 @@ export const AuthProvider = ({ children }) => {
             roleFetchedRef.current = false;
             
             logEvent('Auth', 'AUTH_STATE_CHANGED', { event: 'SIGNED_OUT' });
+          } else {
+            // No session and no user, clear role state
+            setUserRole(null);
+            setIsCoach(false);
+            setIsAdmin(false);
+            roleFetchedRef.current = false;
           }
         });
 
@@ -220,7 +226,7 @@ export const AuthProvider = ({ children }) => {
             isCoach: demoUser.is_coach,
             isAdmin: demoUser.role === 'admin'
           });
-        } else {
+        } else if (!demoMode.isEnabled()) {
           console.log('Real auth mode - getting session and user');
           const currentSession = await authApi.getSession();
           const currentUser = await authApi.getCurrentUser();
