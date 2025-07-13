@@ -16,27 +16,17 @@ import {
   X,
   HeartHandshake,
   Calendar,
-  MessageCircle,
-  Bot,
-  Zap
+  Bot
 } from "lucide-react";
-import { userApi } from "@/api/userApi";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import AuthChecker from "@/components/common/AuthChecker";
-import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import DemoModeToggle from "@/components/common/DemoModeToggle";
-
-// Chat imports
 import FloatingChatPanel from "@/components/aichat/FloatingChatPanel";
 import { chatMessageApi } from "@/api/chatMessageApi";
 import { createFoodEntry } from "@/api/foodEntryApi";
 import { InvokeLLM, UploadFile } from "@/api/integrations";
 import { format } from "date-fns";
-import { logEvent } from '@/components/utils/logger';
+import { Button } from "@/components/ui/button";
+import { AnimatePresence } from "framer-motion";
 
 const navigationItems = [
   {
@@ -239,11 +229,11 @@ export default function Layout({ children, currentPageName }) {
 
                 await createFoodEntry({
                     food_name: calculatedFood.name,
-                    calories: calculatedFood.calories,
-                    protein: calculatedFood.protein,
-                    carbs: calculatedFood.carbs,
-                    fat: calculatedFood.fat,
-                    quantity: calculatedFood.quantity,
+                    calories: Number(calculatedFood.calories) || 0,
+                    protein: Number(calculatedFood.protein) || 0,
+                    carbs: Number(calculatedFood.carbs) || 0,
+                    fat: Number(calculatedFood.fat) || 0,
+                    quantity: Number(calculatedFood.quantity) || 0,
                     unit: "גרם",
                     meal_type: "snack",
                     entry_date: today,
@@ -362,10 +352,10 @@ ${imageUrl ?
         // Client-side calculation fix
         const individualFoods = (aiResponseData.foods || []).filter(food => food.category !== "summary");
         const calculatedTotals = individualFoods.reduce((totals, food) => {
-            totals.calories += food.calories || 0;
-            totals.protein += food.protein || 0;
-            totals.carbs += food.carbs || 0;
-            totals.fat += food.fat || 0;
+            totals.calories += Number(food.calories || 0);
+            totals.protein += Number(food.protein || 0);
+            totals.carbs += Number(food.carbs || 0);
+            totals.fat += Number(food.fat || 0);
             return totals;
         }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
@@ -421,10 +411,10 @@ ${imageUrl ?
         if (summary.calories > 0 || individualFoods.length > 0) {
           await createFoodEntry({
             food_name: individualFoods.map(f => f.name).join(', ') || "מזון מהצ'אט",
-            calories: summary.calories,
-            protein: summary.protein,
-            carbs: summary.carbs,
-            fat: summary.fat,
+            calories: Number(summary.calories) || 0,
+            protein: Number(summary.protein) || 0,
+            carbs: Number(summary.carbs) || 0,
+            fat: Number(summary.fat) || 0,
             quantity: 1,
             unit: "ארוחה",
             meal_type: summary.meal_type,

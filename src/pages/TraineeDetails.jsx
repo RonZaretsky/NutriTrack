@@ -143,12 +143,19 @@ export default function TraineeDetailsPage() {
     }
   };
 
+  const normalizedFoodEntries = foodEntries.map(entry => ({
+    ...entry,
+    calories: Number(entry.calories) || 0,
+    protein: Number(entry.protein) || 0,
+    carbs: Number(entry.carbs) || 0,
+    fat: Number(entry.fat) || 0
+  }));
   // Calculate totals
-  const totals = foodEntries.reduce((acc, entry) => ({
-    calories: acc.calories + (entry.calories || 0),
-    protein: acc.protein + (entry.protein || 0),
-    carbs: acc.carbs + (entry.carbs || 0),
-    fat: acc.fat + (entry.fat || 0)
+  const totals = normalizedFoodEntries.reduce((acc, entry) => ({
+    calories: acc.calories + entry.calories,
+    protein: acc.protein + entry.protein,
+    carbs: acc.carbs + entry.carbs,
+    fat: acc.fat + entry.fat
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
   // Calculate macro data for pie chart
@@ -459,13 +466,13 @@ export default function TraineeDetailsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {foodEntries.length === 0 ? (
+            {normalizedFoodEntries.length === 0 ? (
               <p className="text-center text-slate-500 py-8">
                 לא נרשמו ארוחות ביום זה
               </p>
             ) : (
               <div className="space-y-3">
-                {foodEntries.map((entry) => (
+                {normalizedFoodEntries.map((entry) => (
                   <div key={entry.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                     <div className="flex-1">
                       <p className="font-medium">{entry.food_name}</p>

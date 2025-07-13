@@ -45,10 +45,10 @@ export default function NutritionalSummaryPage() {
       
       const foodsForGraph = dayFoodEntries.map(entry => ({
         name: entry.food_name,
-        calories: entry.calories || 0,
-        protein: entry.protein || 0,
-        carbs: entry.carbs || 0,
-        fat: entry.fat || 0,
+        calories: Number(entry.calories) || 0,
+        protein: Number(entry.protein) || 0,
+        carbs: Number(entry.carbs) || 0,
+        fat: Number(entry.fat) || 0,
         category: entry.category || 'other'
       }));
       
@@ -74,10 +74,10 @@ export default function NutritionalSummaryPage() {
 
   // Calculate totals from foods
   const totals = dailyFoods.reduce((acc, food) => ({
-    calories: acc.calories + (food.calories || 0),
-    protein: acc.protein + (food.protein || 0),
-    carbs: acc.carbs + (food.carbs || 0),
-    fat: acc.fat + (food.fat || 0)
+    calories: acc.calories + Number(food.calories || 0),
+    protein: acc.protein + Number(food.protein || 0),
+    carbs: acc.carbs + Number(food.carbs || 0),
+    fat: acc.fat + Number(food.fat || 0)
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
   // Calculate macro data for pie chart
@@ -283,7 +283,7 @@ export default function NutritionalSummaryPage() {
                           dataKey="value"
                         >
                           {macroData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                            <Cell key={`macro-cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
                         <Tooltip 

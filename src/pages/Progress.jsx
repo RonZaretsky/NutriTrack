@@ -69,10 +69,17 @@ export default function Progress() {
 
         const dayEntries = await getFoodEntriesByUserAndDate(user.email, dateStr);
 
-        const totalCalories = dayEntries.reduce((sum, entry) => sum + (entry.calories || 0), 0);
-        const totalProtein = dayEntries.reduce((sum, entry) => sum + (entry.protein || 0), 0);
-        const totalCarbs = dayEntries.reduce((sum, entry) => sum + (entry.carbs || 0), 0);
-        const totalFat = dayEntries.reduce((sum, entry) => sum + (entry.fat || 0), 0);
+        const normalizedDayEntries = dayEntries.map(entry => ({
+          ...entry,
+          calories: Number(entry.calories) || 0,
+          protein: Number(entry.protein) || 0,
+          carbs: Number(entry.carbs) || 0,
+          fat: Number(entry.fat) || 0
+        }));
+        const totalCalories = normalizedDayEntries.reduce((sum, entry) => sum + entry.calories, 0);
+        const totalProtein = normalizedDayEntries.reduce((sum, entry) => sum + entry.protein, 0);
+        const totalCarbs = normalizedDayEntries.reduce((sum, entry) => sum + entry.carbs, 0);
+        const totalFat = normalizedDayEntries.reduce((sum, entry) => sum + entry.fat, 0);
 
         weekData.push({
           date: dateStr,
@@ -91,7 +98,14 @@ export default function Progress() {
       const monthStart = format(startOfDay(subDays(today, 30)), 'yyyy-MM-dd');
       const monthEntries = await getFoodEntriesByUserAndDate(user.email, { $gte: monthStart });
 
-      const monthlyCalories = monthEntries.reduce((sum, entry) => sum + (entry.calories || 0), 0);
+      const normalizedMonthEntries = monthEntries.map(entry => ({
+        ...entry,
+        calories: Number(entry.calories) || 0,
+        protein: Number(entry.protein) || 0,
+        carbs: Number(entry.carbs) || 0,
+        fat: Number(entry.fat) || 0
+      }));
+      const monthlyCalories = normalizedMonthEntries.reduce((sum, entry) => sum + entry.calories, 0);
       const avgDailyCalories = monthlyCalories / 30;
       const totalEntries = monthEntries.length;
       const daysWithEntries = new Set(monthEntries.map(entry => entry.entry_date)).size;
