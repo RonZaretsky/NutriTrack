@@ -158,7 +158,7 @@ function PagesContent() {
 export default function Pages() {
     return (
         <AuthProvider>
-            <Router>
+            <Router basename="/NutriTrack">
                 <PagesContent />
             </Router>
         </AuthProvider>
