@@ -19,6 +19,13 @@ export default function DemoModeToggle() {
   const { user, isAdmin, isCoach } = useAuth();
   const [isDemoMode, setIsDemoMode] = React.useState(demoMode.isEnabled());
 
+  // Only show demo mode toggle in development
+  const isDevelopment = import.meta.env.VITE_APP_ENV === 'development' || import.meta.env.DEV;
+  
+  if (!isDevelopment) {
+    return null;
+  }
+
   const handleToggle = () => {
     demoMode.toggle();
     setIsDemoMode(demoMode.isEnabled());

@@ -5,6 +5,11 @@ const DEMO_MODE_KEY = 'nutri-track-demo-mode';
 export const demoMode = {
   // Check if demo mode is enabled
   isEnabled() {
+    // In production, never allow demo mode unless explicitly enabled
+    if (import.meta.env.VITE_APP_ENV === 'production' && import.meta.env.VITE_DEMO_MODE !== 'true') {
+      return false;
+    }
+    
     return localStorage.getItem(DEMO_MODE_KEY) === 'true' || 
            import.meta.env.VITE_DEMO_MODE === 'true' ||
            import.meta.env.DEMO_MODE === 'true';

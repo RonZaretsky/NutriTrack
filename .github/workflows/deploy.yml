@@ -26,6 +26,8 @@ jobs:
     - name: Build
       run: npm run build
       env:
+        VITE_APP_ENV: production
+        VITE_DEMO_MODE: false
         VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
         VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         VITE_CLOUDINARY_CLOUD_NAME: ${{ secrets.VITE_CLOUDINARY_CLOUD_NAME }}
