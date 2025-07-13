@@ -16,6 +16,8 @@ import Register from "./auth/Register.jsx";
 import ForgotPassword from "./auth/ForgotPassword.jsx";
 import DemoTest from "./auth/DemoTest.jsx";
 import SetupCheck from "./auth/SetupCheck.jsx";
+import AuthCallback from "./auth/AuthCallback.jsx";
+import ResetPassword from "./auth/ResetPassword.jsx";
 
 // Auth components
 import AuthChecker from "@/components/common/AuthChecker.jsx";
@@ -62,6 +64,8 @@ function PagesContent() {
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/auth/demo-test" element={<DemoTest />} />
             <Route path="/auth/setup-check" element={<SetupCheck />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
             
             {/* Protected routes with Layout */}
             <Route path="/" element={

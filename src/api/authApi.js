@@ -2,6 +2,16 @@ import { supabase } from './supabaseClient';
 
 // Authentication API wrapper for Supabase
 export const authApi = {
+  // Get the correct redirect URL based on environment
+  getRedirectUrl(path) {
+    // In production (GitHub Pages), use the correct domain
+    if (import.meta.env.VITE_APP_ENV === 'production' || (!import.meta.env.DEV && window.location.hostname !== 'localhost')) {
+      return `https://ronzaretsky.github.io/NutriTrack${path}`;
+    }
+    
+    // In development, use localhost
+    return `${window.location.origin}${path}`;
+  },
   // Sign up with email and password
   async signUp(email, password, fullName) {
     try {
@@ -13,7 +23,8 @@ export const authApi = {
             full_name: fullName,
             role: 'user',
             is_coach: false
-          }
+          },
+          emailRedirectTo: this.getRedirectUrl('/auth/callback')
         }
       });
       
@@ -47,7 +58,7 @@ export const authApi = {
       const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: this.getRedirectUrl('/auth/callback')
         }
       });
       
@@ -99,7 +110,7 @@ export const authApi = {
   async resetPassword(email) {
     try {
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+        redirectTo: this.getRedirectUrl('/auth/reset-password')
       });
       
       if (error) throw error;
