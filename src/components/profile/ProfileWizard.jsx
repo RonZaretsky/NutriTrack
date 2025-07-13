@@ -151,7 +151,11 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
       } else {
         console.log('ProfileWizard - Creating new profile');
         const user = await userApi.me();
-        await userProfileApi.create({ ...profileData, display_name: user.full_name });
+        await userProfileApi.create({ 
+          ...profileData, 
+          display_name: user.full_name,
+          created_by: user.email 
+        });
         console.log('ProfileWizard - Profile created successfully');
       }
       
