@@ -145,13 +145,20 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
       });
 
       if (existingProfile && existingProfile.id) {
+        console.log('ProfileWizard - Updating existing profile:', existingProfile.id);
         await userProfileApi.update(existingProfile.id, profileData);
+        console.log('ProfileWizard - Profile updated successfully');
       } else {
+        console.log('ProfileWizard - Creating new profile');
         const user = await userApi.me();
         await userProfileApi.create({ ...profileData, display_name: user.full_name });
+        console.log('ProfileWizard - Profile created successfully');
       }
       
-      onSave();
+      // Wait for the onSave callback to complete
+      console.log('ProfileWizard - Calling onSave callback');
+      await onSave();
+      console.log('ProfileWizard - onSave callback completed');
     } catch (error) {
       logEvent('ProfileWizard', 'SUBMIT_ERROR', { error: error.message }, 'ERROR');
       console.error("Error saving profile:", error);

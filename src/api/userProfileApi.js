@@ -38,6 +38,7 @@ export const userProfileApi = {
   // Create new user profile
   async create(profileData) {
     try {
+      console.log('userProfileApi - Creating profile with data:', profileData);
       const { data, error } = await supabase
         .from('user_profiles')
         .insert([profileData])
@@ -45,6 +46,7 @@ export const userProfileApi = {
         .single();
       
       if (error) throw error;
+      console.log('userProfileApi - Profile created successfully:', data);
       return data;
     } catch (error) {
       console.error('Error creating user profile:', error);
@@ -55,6 +57,7 @@ export const userProfileApi = {
   // Update user profile
   async update(id, updates) {
     try {
+      console.log('userProfileApi - Updating profile:', id, 'with data:', updates);
       const { data, error } = await supabase
         .from('user_profiles')
         .update(updates)
@@ -63,6 +66,7 @@ export const userProfileApi = {
         .single();
       
       if (error) throw error;
+      console.log('userProfileApi - Profile updated successfully:', data);
       return data;
     } catch (error) {
       console.error('Error updating user profile:', error);
@@ -89,6 +93,7 @@ export const userProfileApi = {
   // Filter profiles (for coach use)
   async filter(filters = {}) {
     try {
+      console.log('userProfileApi - Filtering profiles with filters:', filters);
       let query = supabase.from('user_profiles').select('*');
       
       // Apply filters
@@ -105,6 +110,7 @@ export const userProfileApi = {
       const { data, error } = await withTimeout(query);
       
       if (error) throw error;
+      console.log('userProfileApi - Filter results:', data);
       return data || [];
     } catch (error) {
       console.error('Error filtering user profiles:', error);

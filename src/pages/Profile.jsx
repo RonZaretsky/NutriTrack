@@ -21,18 +21,26 @@ export default function Profile() {
   const loadProfileData = async () => {
     setIsLoading(true);
     try {
+      console.log('Profile - Loading profile data...');
       const currentUser = await userApi.me();
+      console.log('Profile - Current user:', currentUser);
       setUser(currentUser);
 
       const profiles = await userProfileApi.filter({ created_by: currentUser.email });
+      console.log('Profile - Found profiles:', profiles);
       if (profiles.length > 0) {
         const profile = profiles[0];
+        console.log('Profile - Using profile:', profile);
         setUserProfile(profile);
         if (!profile.setup_completed) {
+          console.log('Profile - Setup not completed, showing wizard');
           setIsEditing(true);
+        } else {
+          console.log('Profile - Setup completed, showing summary');
         }
       } else {
         // No profile exists, force setup
+        console.log('Profile - No profile found, showing wizard');
         setIsEditing(true);
       }
     } catch (error) {
@@ -62,13 +70,17 @@ export default function Profile() {
       setUserProfile(mockProfile);
     } finally {
       setIsLoading(false);
+      console.log('Profile - Profile data loading completed');
     }
   };
 
-  const handleWizardSave = () => {
+  const handleWizardSave = async () => {
     logEvent('Profile', 'WIZARD_SAVE');
+    console.log('Profile - Wizard save started');
     setIsEditing(false);
-    loadProfileData();
+    // Ensure profile data is loaded before completing
+    await loadProfileData();
+    console.log('Profile - Wizard save completed, profile data loaded');
   };
   
   const handleWizardCancel = () => {
