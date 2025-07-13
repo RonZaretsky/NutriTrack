@@ -236,6 +236,21 @@ class AIService {
   // Upload file method (converts to base64 for AI providers)
   async uploadFile(file) {
     try {
+      // Validate file type for OpenAI compatibility
+      const supportedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+      
+      if (!supportedTypes.includes(file.type)) {
+        // Try to convert unsupported image formats to JPEG
+        if (file.type.startsWith('image/')) {
+          console.log(`Converting ${file.type} to JPEG for OpenAI compatibility`);
+          const convertedFile = await this.convertImageToJPEG(file);
+          const base64 = await this.fileToBase64(convertedFile);
+          return `data:image/jpeg;base64,${base64}`;
+        } else {
+          throw new Error(`Unsupported file format: ${file.type}. Please use PNG, JPEG, GIF, or WebP images.`);
+        }
+      }
+      
       // Convert file to base64 for AI providers
       const base64 = await this.fileToBase64(file);
       return `data:${file.type};base64,${base64}`;
@@ -248,6 +263,12 @@ class AIService {
   // Helper method to convert file to base64
   async fileToBase64(file) {
     return new Promise((resolve, reject) => {
+      // Validate that file is a Blob or File
+      if (!(file instanceof Blob) && !(file instanceof File)) {
+        reject(new Error('Parameter must be a File or Blob object'));
+        return;
+      }
+      
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
@@ -255,6 +276,32 @@ class AIService {
         resolve(base64);
       };
       reader.onerror = error => reject(error);
+    });
+  }
+
+  // Helper method to convert unsupported image formats to JPEG
+  async convertImageToJPEG(file) {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to convert image to JPEG'));
+          }
+        }, 'image/jpeg', 0.9);
+      };
+      
+      img.onerror = () => reject(new Error('Failed to load image for conversion'));
+      img.src = URL.createObjectURL(file);
     });
   }
 
@@ -300,7 +347,11 @@ const defaultAI = new AIService(defaultProvider);
 
 // Export functions for backward compatibility
 export const InvokeLLM = (params) => defaultAI.invokeLLM(params);
-export const UploadFile = (file) => defaultAI.uploadFile(file);
+export const UploadFile = (fileOrParams) => {
+  // Handle both direct file and object with file property
+  const file = fileOrParams.file || fileOrParams;
+  return defaultAI.uploadFile(file).then(base64Url => ({ file_url: base64Url }));
+};
 
 // Export the service class for advanced usage
 export { AIService };

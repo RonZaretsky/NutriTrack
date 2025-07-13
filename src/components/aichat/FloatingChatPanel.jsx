@@ -109,7 +109,7 @@ export default function FloatingChatPanel({
               </div>
             )}
           <div className="flex gap-2">
-            <Input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+            <Input type="file" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
             <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isLoading}><ImageIcon className="w-4 h-4" /></Button>
             <Input
               placeholder="תאר מה אכלת..."
