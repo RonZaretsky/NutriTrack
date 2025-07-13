@@ -76,7 +76,7 @@ class AIService {
   // Supabase Edge Function implementation (Primary - Production)
   async supabaseInvoke({ prompt, file_urls, response_json_schema }) {
     if (!import.meta.env.VITE_SUPABASE_URL) {
-      throw new Error('Supabase URL not configured. Please add VITE_SUPABASE_URL to your .env file');
+      throw new Error('Supabase URL not configured for AI service. Please ensure VITE_SUPABASE_URL is set and the ai-proxy Edge Function is deployed.');
     }
 
     const { supabase } = await import('./supabaseClient.js');
@@ -260,6 +260,9 @@ class AIService {
 
   // Check if provider is configured
   isConfigured() {
+    if (this.provider === 'supabase') {
+      return !!import.meta.env.VITE_SUPABASE_URL;
+    }
     return !!this.config.apiKey;
   }
 
@@ -277,16 +280,21 @@ class AIService {
 const availableProviders = AIService.getAvailableProviders();
 let defaultProvider;
 
-if (import.meta.env.DEV && availableProviders.includes('openai')) {
+// In production, always prefer Supabase Edge Function
+if (import.meta.env.VITE_APP_ENV === 'production' || (!import.meta.env.DEV && availableProviders.includes('supabase'))) {
+  defaultProvider = 'supabase';
+} else if (import.meta.env.DEV && availableProviders.includes('openai')) {
   // Use OpenAI directly in development if available
   defaultProvider = 'openai';
 } else if (availableProviders.includes('supabase')) {
-  // Use Supabase Edge Function in production
+  // Use Supabase Edge Function as fallback
   defaultProvider = 'supabase';
 } else {
   // Fallback to any available provider
   defaultProvider = availableProviders[0] || 'supabase';
 }
+
+console.log('AI Service: Using provider:', defaultProvider, 'Available providers:', availableProviders);
 
 const defaultAI = new AIService(defaultProvider);
 
