@@ -8,18 +8,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { 
-  User as UserIcon, 
-  Target, 
-  Activity, 
+import {
+  User as UserIcon,
+  Target,
+  Activity,
   TrendingUp,
   TrendingDown,
   CheckCircle2,
@@ -81,9 +81,9 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
 
   const calculateCalories = () => {
     const { age, height, weight, gender, goal, workout_frequency, target_rate, body_fat_percentage } = formData;
-    
+
     let bmr;
-    
+
     const parsedWeight = parseFloat(weight);
     const parsedHeight = parseFloat(height);
     const parsedAge = parseFloat(age);
@@ -108,7 +108,7 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
 
     const activityFactors = { 0: 1.2, 1: 1.375, 2: 1.375, 3: 1.55, 4: 1.55, 5: 1.725, 6: 1.725, 7: 1.9 };
     const tdee = bmr * (activityFactors[parseInt(workout_frequency)] || 1.2);
-    
+
     let dailyCalories = tdee;
     if (goal === 'lose' && !isNaN(parseFloat(target_rate))) {
       dailyCalories = tdee - ((parseFloat(target_rate) * 7700) / 30);
@@ -151,7 +151,7 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
       } else {
         console.log('ProfileWizard - Creating new profile');
         const user = await userApi.me();
-        
+
         // Check if a profile already exists for this user
         try {
           const existingProfiles = await userProfileApi.filter({ created_by: user.email });
@@ -161,25 +161,25 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
             console.log('ProfileWizard - Existing profile updated successfully');
           } else {
             console.log('ProfileWizard - No existing profile found, creating new one');
-            await userProfileApi.create({ 
-              ...profileData, 
+            await userProfileApi.create({
+              ...profileData,
               display_name: user.full_name,
-              created_by: user.email 
+              created_by: user.email
             });
             console.log('ProfileWizard - Profile created successfully');
           }
         } catch (error) {
           console.error('ProfileWizard - Error checking for existing profiles:', error);
           // Fallback to creating new profile
-          await userProfileApi.create({ 
-            ...profileData, 
+          await userProfileApi.create({
+            ...profileData,
             display_name: user.full_name,
-            created_by: user.email 
+            created_by: user.email
           });
           console.log('ProfileWizard - Profile created successfully (fallback)');
         }
       }
-      
+
       // Wait for the onSave callback to complete
       console.log('ProfileWizard - Calling onSave callback');
       await onSave();
@@ -194,7 +194,7 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
 
   const validateStep = (step) => {
     const newErrors = {};
-    
+
     switch (step) {
       case 1:
         if (!formData.age) newErrors.age = true;
@@ -214,7 +214,7 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
         if (formData.goal !== 'maintain' && !formData.target_rate) newErrors.target_rate = true;
         break;
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -227,12 +227,12 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
       logEvent('ProfileWizard', 'VALIDATION_ERROR', { step: currentStep, errors: Object.keys(errors) });
     }
   };
-  
+
   const prevStep = () => {
     logEvent('ProfileWizard', 'PREVIOUS_STEP', { from: currentStep, to: currentStep - 1 });
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
-  
+
   const getStepTitle = () => {
     const titles = {
       1: "פרטים אישיים",
@@ -380,11 +380,10 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
                 <div className="grid gap-4">
                   <Button
                     variant={formData.goal === 'lose' ? 'default' : 'outline'}
-                    className={`h-16 text-right justify-start ${
-                      formData.goal === 'lose'
+                    className={`h-16 text-right justify-start ${formData.goal === 'lose'
                         ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
                         : 'hover:bg-red-50'
-                    } ${errors.goal ? 'border-red-500' : ''}`}
+                      } ${errors.goal ? 'border-red-500' : ''}`}
                     onClick={() => handleInputChange('goal', 'lose')}
                   >
                     <TrendingDown className="w-6 h-6 ml-3" />
@@ -396,11 +395,10 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
 
                   <Button
                     variant={formData.goal === 'maintain' ? 'default' : 'outline'}
-                    className={`h-16 text-right justify-start ${
-                      formData.goal === 'maintain'
+                    className={`h-16 text-right justify-start ${formData.goal === 'maintain'
                         ? 'bg-gradient-to-r from-blue-500 to-green-500 text-white'
                         : 'hover:bg-blue-50'
-                    } ${errors.goal ? 'border-red-500' : ''}`}
+                      } ${errors.goal ? 'border-red-500' : ''}`}
                     onClick={() => handleInputChange('goal', 'maintain')}
                   >
                     <Minus className="w-6 h-6 ml-3" />
@@ -412,11 +410,10 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
 
                   <Button
                     variant={formData.goal === 'gain' ? 'default' : 'outline'}
-                    className={`h-16 text-right justify-start ${
-                      formData.goal === 'gain'
+                    className={`h-16 text-right justify-start ${formData.goal === 'gain'
                         ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white'
                         : 'hover:bg-green-50'
-                    } ${errors.goal ? 'border-red-500' : ''}`}
+                      } ${errors.goal ? 'border-red-500' : ''}`}
                     onClick={() => handleInputChange('goal', 'gain')}
                   >
                     <TrendingUp className="w-6 h-6 ml-3" />
@@ -496,10 +493,10 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
             )}
 
             {currentStep === 4 && formData.goal === 'maintain' && (
-               <div className="text-center p-8">
-                  <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-500" />
-                  <h3 className="text-lg font-semibold">מעולה!</h3>
-                  <p className="text-slate-600">אין צורך להגדיר קצב למטרת שמירה על המשקל.</p>
+              <div className="text-center p-8">
+                <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-500" />
+                <h3 className="text-lg font-semibold">מעולה!</h3>
+                <p className="text-slate-600">אין צורך להגדיר קצב למטרת שמירה על המשקל.</p>
               </div>
             )}
 
@@ -565,17 +562,17 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
                 <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl text-center">
                   <h4 className="font-bold text-xl text-slate-900 mb-2">היעד הקלורי היומי שלך</h4>
                   <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                    {calculateCalories().daily_calories}
+                    {Number(calculateCalories().daily_calories).toFixed(1)}
                   </div>
                   <p className="text-slate-600 mt-2">קלוריות ביום</p>
                   <div className="grid grid-cols-2 gap-4 mt-6 text-sm">
                     <div>
                       <p className="text-slate-600">BMR</p>
-                      <p className="font-semibold text-lg">{calculateCalories().bmr}</p>
+                      <p className="font-semibold text-lg">{Number(calculateCalories().bmr).toFixed(1)}</p>
                     </div>
                     <div>
                       <p className="text-slate-600">TDEE</p>
-                      <p className="font-semibold text-lg">{calculateCalories().tdee}</p>
+                      <p className="font-semibold text-lg">{Number(calculateCalories().tdee).toFixed(1)}</p>
                     </div>
                   </div>
                   {formData.body_fat_percentage && (
@@ -597,7 +594,7 @@ export default function ProfileWizard({ existingProfile, onSave, onCancel }) {
             </Button>
           ) : (
             <Button variant="outline" onClick={onCancel} disabled={!existingProfile?.setup_completed} className="border-slate-300 hover:bg-slate-50">
-                ביטול
+              ביטול
             </Button>
           )}
 

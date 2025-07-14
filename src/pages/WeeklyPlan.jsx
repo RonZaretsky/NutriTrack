@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -65,7 +65,7 @@ export default function WeeklyPlanPage() {
 
   const loadWeeklyPlan = async (userEmail, defaultCalories) => {
     const weekStartStr = format(currentWeek, 'yyyy-MM-dd');
-    
+
     try {
       // Try to find existing plan for this week
       const existingPlans = await weeklyPlanApi.filter({
@@ -82,7 +82,7 @@ export default function WeeklyPlanPage() {
       // No plan for this week, create default based on previous week or profile default
       const previousWeek = subWeeks(currentWeek, 1);
       const previousWeekStr = format(previousWeek, 'yyyy-MM-dd');
-      
+
       const previousPlans = await weeklyPlanApi.filter({
         created_by: userEmail,
         week_start_date: previousWeekStr
@@ -135,18 +135,18 @@ export default function WeeklyPlanPage() {
 
   const handleSave = async () => {
     if (!weeklyPlan || !hasUnsavedChanges) return;
-    
+
     setIsSaving(true);
     try {
-              if (weeklyPlan.id) {
-          // Update existing plan
-          await weeklyPlanApi.update(weeklyPlan.id, weeklyPlan);
-        } else {
-          // Create new plan
-          const created = await weeklyPlanApi.create(weeklyPlan);
+      if (weeklyPlan.id) {
+        // Update existing plan
+        await weeklyPlanApi.update(weeklyPlan.id, weeklyPlan);
+      } else {
+        // Create new plan
+        const created = await weeklyPlanApi.create(weeklyPlan);
         setWeeklyPlan(created);
       }
-      
+
       setHasUnsavedChanges(false);
       logEvent('WeeklyPlan', 'SAVE_SUCCESS');
     } catch (error) {
@@ -164,7 +164,7 @@ export default function WeeklyPlanPage() {
   const handleNextWeek = () => {
     setCurrentWeek(prev => addWeeks(prev, 1));
   };
-  
+
   const handleResetToDefault = () => {
     if (!userProfile) return;
     const defaultCalories = userProfile.daily_calories;
@@ -185,12 +185,12 @@ export default function WeeklyPlanPage() {
   const handleCopyFromPrevious = async () => {
     const previousWeek = subWeeks(currentWeek, 1);
     const previousWeekStr = format(previousWeek, 'yyyy-MM-dd');
-    
+
     try {
-              const previousPlans = await weeklyPlanApi.filter({
-          created_by: user.email,
-          week_start_date: previousWeekStr
-        });
+      const previousPlans = await weeklyPlanApi.filter({
+        created_by: user.email,
+        week_start_date: previousWeekStr
+      });
 
       if (previousPlans.length > 0) {
         const prevPlan = previousPlans[0];
@@ -226,18 +226,18 @@ export default function WeeklyPlanPage() {
     if (!userProfile) return null;
     const average = calculateWeeklyAverage();
     const target = userProfile.daily_calories;
-    
+
     if (target === 0) {
-        return {
-            type: 'good',
-            message: 'אין יעד להשוואה',
-            color: 'text-slate-500 bg-slate-100'
-        };
+      return {
+        type: 'good',
+        message: 'אין יעד להשוואה',
+        color: 'text-slate-500 bg-slate-100'
+      };
     }
-    
+
     const deviation = Math.abs(average - target);
     const percentDeviation = (deviation / target) * 100;
-    
+
     if (percentDeviation > 5) {
       return {
         type: 'warning',
@@ -311,7 +311,7 @@ export default function WeeklyPlanPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-slate-900">
-                {userProfile?.daily_calories || 0}
+                {Number(userProfile?.daily_calories || 0).toFixed(1)}
               </div>
               <p className="text-sm text-slate-600">קלוריות ביום</p>
             </CardContent>
@@ -326,7 +326,7 @@ export default function WeeklyPlanPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-slate-900">
-                {calculateWeeklyAverage()}
+                {Number(calculateWeeklyAverage()).toFixed(1)}
               </div>
               <p className="text-sm text-slate-600">קלוריות ביום</p>
             </CardContent>
@@ -358,22 +358,22 @@ export default function WeeklyPlanPage() {
           <CardHeader className="flex flex-col md:flex-row items-center justify-between gap-4">
             <CardTitle>תכנון השבוע</CardTitle>
             <div className="flex gap-2 flex-wrap justify-center">
-              <Button 
+              <Button
                 variant="outline"
                 onClick={handleCopyFromPrevious}
               >
                 <Copy className="w-4 h-4 mr-2" />
                 העתק משבוע קודם
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={handleResetToDefault}
               >
                 <RefreshCcw className="w-4 h-4 mr-2" />
                 אפס לברירת מחדל
               </Button>
-              <Button 
-                onClick={handleSave} 
+              <Button
+                onClick={handleSave}
                 disabled={!hasUnsavedChanges || isSaving}
                 className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
               >
@@ -387,7 +387,7 @@ export default function WeeklyPlanPage() {
               {dayKeys.map((dayKey, index) => {
                 const dayDate = addDays(currentWeek, index);
                 const isCurrentDay = isToday(dayDate);
-                
+
                 return (
                   <Card key={dayKey} className={`border-2 ${isCurrentDay ? 'border-blue-400 bg-blue-50' : 'border-slate-200'}`}>
                     <CardHeader className="pb-3">
