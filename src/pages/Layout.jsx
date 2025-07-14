@@ -40,11 +40,6 @@ const navigationItems = [
     icon: Calendar,
   },
   {
-    title: "סיכום תזונתי",
-    url: createPageUrl("NutritionalSummary"),
-    icon: BarChart3,
-  },
-  {
     title: "הפרופיל שלי",
     url: createPageUrl("Profile"),
     icon: UserIcon,

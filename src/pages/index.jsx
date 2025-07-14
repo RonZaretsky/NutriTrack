@@ -1,7 +1,6 @@
 import Layout from "./Layout.jsx";
 import Dashboard from "./Dashboard";
 import Profile from "./Profile";
-import NutritionalSummary from "./NutritionalSummary";
 import Progress from "./Progress";
 import Friends from "./Friends";
 import AdminLogs from "./AdminLogs";
@@ -28,7 +27,6 @@ import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-route
 const PAGES = {
     Dashboard: Dashboard,
     Profile: Profile,
-    NutritionalSummary: NutritionalSummary,
     Progress: Progress,
     Friends: Friends,
     AdminLogs: AdminLogs,
@@ -88,14 +86,6 @@ function PagesContent() {
                 <AuthChecker>
                     <Layout currentPageName="Profile">
                         <Profile />
-                    </Layout>
-                </AuthChecker>
-            } />
-
-            <Route path="/NutritionalSummary" element={
-                <AuthChecker>
-                    <Layout currentPageName="NutritionalSummary">
-                        <NutritionalSummary />
                     </Layout>
                 </AuthChecker>
             } />

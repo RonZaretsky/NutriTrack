@@ -6,7 +6,7 @@ import { getFoodEntriesByUserAndDate, createFoodEntry, updateFoodEntry, deleteFo
 import { weightEntryApi } from "@/api/weightEntryApi";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { format } from "date-fns";
+import { format, addDays, subDays, isToday } from "date-fns";
 import { he } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,9 @@ import {
   Wrench,
   X,
   UserPlus, // Added for coach requests
-  Check     // Added for coach requests
+  Check,     // Added for coach requests
+  ChevronLeft, // Added for date navigation
+  ChevronRight // Added for date navigation
 } from "lucide-react";
 import EditFoodWithAI from "../components/dashboard/EditFoodWithAI";
 import BarcodeScanner from "../components/dashboard/BarcodeScanner";
@@ -29,6 +31,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { coachRequestApi } from "@/api/coachRequestApi"; // Added for coach requests
 import { getPlannedCaloriesForDate } from "@/components/utils/weeklyPlanUtils"; // Import the utility
 import { useAuth } from "@/contexts/AuthContext";
+import SummaryGraph from "@/components/nutritionalSummary/SummaryGraph";
+import NutritionCard from "@/components/nutritionalSummary/NutritionCard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -48,6 +52,9 @@ export default function Dashboard() {
   const [entryToEdit, setEntryToEdit] = useState(null);
   const [coachRequests, setCoachRequests] = useState([]); // Added state for coach requests
   const [error, setError] = useState(null); // Added error state
+
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [dailyFoods, setDailyFoods] = useState([]);
 
   // Ref to track if data has been loaded to prevent infinite loops
   const dataLoadedRef = useRef(false);
@@ -101,7 +108,7 @@ export default function Dashboard() {
     return () => {
       window.removeEventListener('foodEntryAdded', handleDataRefresh);
     };
-  }, [authLoading, isAuthenticated, userRole]); // Depend on auth state and user role
+  }, [authLoading, isAuthenticated, userRole, selectedDate]); // Depend on auth state and user role
 
   // Cleanup effect to reset loading state when component unmounts
   useEffect(() => {
@@ -169,7 +176,7 @@ export default function Dashboard() {
       setUserProfile(profile);
 
       // Fetch all data in parallel with timeouts
-      const today = format(new Date(), 'yyyy-MM-dd');
+      const today = format(selectedDate, 'yyyy-MM-dd');
       console.log('Dashboard - Fetching all data in parallel for:', today);
 
       // Show loading progress
@@ -187,7 +194,7 @@ export default function Dashboard() {
 
       // Fetch all data in parallel
       const [plannedCalories, requests, foodEntries, weightEntries] = await Promise.allSettled([
-        createTimeoutPromise(getPlannedCaloriesForDate(currentUser.email, new Date())),
+        createTimeoutPromise(getPlannedCaloriesForDate(currentUser.email, selectedDate)),
         createTimeoutPromise(coachRequestApi.filter({ trainee_email: currentUser.email })),
         createTimeoutPromise(getFoodEntriesByUserAndDate(currentUser.email, today)),
         createTimeoutPromise(weightEntryApi.filter({ created_by: currentUser.email, entry_date: today }))
@@ -209,6 +216,7 @@ export default function Dashboard() {
       setPlannedCalories(todayPlannedCalories);
       setCoachRequests(coachRequests);
       setTodaysEntries(todaysFoodEntries);
+      setDailyFoods(todaysFoodEntries); // Set dailyFoods for the graph
       setWeightUpdatedToday(todaysWeightEntries.length > 0);
 
       console.log('Dashboard - All data loaded successfully');
@@ -223,6 +231,7 @@ export default function Dashboard() {
       setPlannedCalories(0);
       setCoachRequests([]);
       setTodaysEntries([]);
+      setDailyFoods([]); // Clear dailyFoods on error
       setWeightUpdatedToday(false);
     } finally {
       console.log('Dashboard - Setting loading to false');
@@ -274,6 +283,7 @@ export default function Dashboard() {
         logEvent('Dashboard', 'CONFIRM_DELETE_FOOD_ENTRY', { entryId });
         // Update state directly for smooth removal instead of full reload
         setTodaysEntries(prevEntries => prevEntries.filter(entry => entry.id !== entryId));
+        setDailyFoods(prevFoods => prevFoods.filter(food => food.id !== entryId)); // Update dailyFoods
       } catch (error) {
         logEvent('Dashboard', 'ERROR_DELETING_ENTRY', { entryId, error: error.message }, 'ERROR');
         console.error("Error deleting entry:", error);
@@ -394,6 +404,15 @@ export default function Dashboard() {
     }
   };
 
+  const handlePreviousDay = () => {
+    setSelectedDate(prevDate => subDays(prevDate, 1));
+  };
+  const handleNextDay = () => {
+    if (!isToday(selectedDate)) {
+      setSelectedDate(prevDate => addDays(prevDate, 1));
+    }
+  };
+
   // Show loading spinner while auth is loading or dashboard is loading
   if (authLoading || isLoading) {
     return (
@@ -420,7 +439,7 @@ export default function Dashboard() {
                 שלום, {userProfile?.display_name || user?.full_name || "משתמש"}! 👋
               </h1>
               <p className="text-slate-600 text-lg">
-                {format(new Date(), 'EEEE, d MMMM yyyy', { locale: he })}
+                {isToday(selectedDate) ? "היום" : format(selectedDate, 'EEEE, d MMMM yyyy', { locale: he })}
               </p>
               {userProfile && (
                 <Badge variant="outline" className="mt-2 bg-blue-50 text-blue-700 border-blue-200">
@@ -453,6 +472,18 @@ export default function Dashboard() {
               </Button>
             </div>
           </div>
+        </div>
+        {/* Date Navigation */}
+        <div className="flex items-center justify-center gap-4 mt-4 mb-4">
+          <Button variant="outline" size="icon" onClick={handlePreviousDay}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+          <h2 className="text-xl font-semibold text-slate-800 w-64 text-center">
+            {isToday(selectedDate) ? "היום" : format(selectedDate, 'EEEE, d MMMM', { locale: he })}
+          </h2>
+          <Button variant="outline" size="icon" onClick={handleNextDay} disabled={isToday(selectedDate)}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
@@ -503,25 +534,6 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-8">
           <Card className="glass-effect shadow-lg">
             <CardHeader>
-              <CardTitle>קלוריות היום</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">
-                {totalCalories}
-              </div>
-              <p className="text-slate-600">
-                מתוך {plannedCalories || userProfile?.daily_calories || 0}
-              </p>
-              {plannedCalories !== userProfile?.daily_calories && plannedCalories > 0 && (
-                <Badge variant="outline" className="mt-2 bg-purple-50 text-purple-700 border-purple-200">
-                  יעד מותאם לשבוע
-                </Badge>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="glass-effect shadow-lg">
-            <CardHeader>
               <CardTitle>משקל נוכחי</CardTitle>
             </CardHeader>
             <CardContent>
@@ -544,6 +556,54 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Summary graph directly under date navigation */}
+        <SummaryGraph foods={dailyFoods} dailyCalorieTarget={plannedCalories || userProfile?.daily_calories || 2000} />
+
+        {/* Weight Modal */}
+        {showWeightModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  עדכון משקל יומי
+                  <Button variant="ghost" size="sm" onClick={() => setShowWeightModal(false)}>✕</Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-600 mb-4">הזן את המשקל העדכני שלך בק״ג.</p>
+                <Input
+                  type="number"
+                  step="0.1"
+                  placeholder={`משקל נוכחי: ${userProfile?.weight || ''} ק״ג`}
+                  value={newWeight}
+                  onChange={(e) => setNewWeight(e.target.value)}
+                  className="text-right"
+                />
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button variant="outline" onClick={() => setShowWeightModal(false)}>ביטול</Button>
+                  <Button onClick={handleUpdateWeight} disabled={!newWeight}>עדכן</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Barcode Scanner */}
+        <BarcodeScanner
+          isOpen={showBarcodeScanner}
+          onClose={() => setShowBarcodeScanner(false)}
+          onBarcodeScanned={handleBarcodeScanned}
+        />
+
+        {/* Edit with AI Modal */}
+        {showEditAI && entryToEdit && (
+          <EditFoodWithAI
+            entry={entryToEdit}
+            onClose={handleEditClose}
+            onSave={handleEditSave}
+          />
+        )}
 
         {/* Today's Entries */}
         <Card className="glass-effect shadow-lg">
@@ -604,51 +664,6 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Weight Modal */}
-        {showWeightModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <Card className="w-full max-w-md">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  עדכון משקל יומי
-                  <Button variant="ghost" size="sm" onClick={() => setShowWeightModal(false)}>✕</Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-600 mb-4">הזן את המשקל העדכני שלך בק״ג.</p>
-                <Input
-                  type="number"
-                  step="0.1"
-                  placeholder={`משקל נוכחי: ${userProfile?.weight || ''} ק״ג`}
-                  value={newWeight}
-                  onChange={(e) => setNewWeight(e.target.value)}
-                  className="text-right"
-                />
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button variant="outline" onClick={() => setShowWeightModal(false)}>ביטול</Button>
-                  <Button onClick={handleUpdateWeight} disabled={!newWeight}>עדכן</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Barcode Scanner */}
-        <BarcodeScanner
-          isOpen={showBarcodeScanner}
-          onClose={() => setShowBarcodeScanner(false)}
-          onBarcodeScanned={handleBarcodeScanned}
-        />
-
-        {/* Edit with AI Modal */}
-        {showEditAI && entryToEdit && (
-          <EditFoodWithAI
-            entry={entryToEdit}
-            onClose={handleEditClose}
-            onSave={handleEditSave}
-          />
-        )}
       </div>
     </div>
   );
