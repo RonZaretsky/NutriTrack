@@ -27,6 +27,8 @@ import { InvokeLLM, UploadFile } from "@/api/integrations";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence } from "framer-motion";
+import BottomNav from "@/components/ui/BottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const navigationItems = [
   {
@@ -76,6 +78,7 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const { user, isAdmin, isCoach, signOut } = useAuth();
+  const isMobile = useIsMobile();
 
   // Chat State
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -450,109 +453,118 @@ ${imageUrl ?
       </style>
 
       <div className="flex h-full">
-        {/* Sidebar */}
-        <div className={`
-              fixed inset-y-0 right-0 z-50 w-72 bg-white/95 backdrop-blur-sm border-l border-slate-200 shadow-xl
-              transform transition-transform duration-300 ease-in-out
-              md:relative md:translate-x-0 md:flex-shrink-0
-              ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}
-            `}>
-          <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between p-6">
-              <Link to={createPageUrl("Dashboard")} className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-green-500 rounded-2xl flex items-center justify-center">
-                  <Apple className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                  NutriTrack
-                </span>
-              </Link>
-              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="md:hidden">
-                <X className="w-6 h-6" />
-              </Button>
-            </div>
-
-            <nav className="flex-1 px-4 py-2 space-y-2">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.title}
-                  to={item.url}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${location.pathname === item.url
-                    ? 'bg-blue-100 text-blue-700 font-semibold'
-                    : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.title}</span>
+        {/* Sidebar: only show on desktop */}
+        {!isMobile && (
+          <div className={
+            `fixed inset-y-0 right-0 z-50 w-72 bg-white/95 backdrop-blur-sm border-l border-slate-200 shadow-xl
+            transform transition-transform duration-300 ease-in-out
+            md:relative md:translate-x-0 md:flex-shrink-0
+            ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`
+          }>
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between p-6">
+                <Link to={createPageUrl("Dashboard")}
+                  className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-green-500 rounded-2xl flex items-center justify-center">
+                    <Apple className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                    NutriTrack
+                  </span>
                 </Link>
-              ))}
-              {isCoach && coachNavItems.map((item) => (
-                <Link
-                  key={item.title}
-                  to={item.url}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${location.pathname === item.url
-                    ? 'bg-purple-100 text-purple-700 font-semibold'
-                    : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.title}</span>
-                </Link>
-              ))}
-              {isAdmin && adminNavItems.map((item) => (
-                <Link
-                  key={item.title}
-                  to={item.url}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${location.pathname === item.url
-                    ? 'bg-red-100 text-red-700 font-semibold'
-                    : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.title}</span>
-                </Link>
-              ))}
-            </nav>
+                <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="md:hidden">
+                  <X className="w-6 h-6" />
+                </Button>
+              </div>
 
-            <div className="p-4 mt-auto space-y-4">
-              {/* Demo Mode Toggle */}
-              <DemoModeToggle />
+              <nav className="flex-1 px-4 py-2 space-y-2">
+                {navigationItems.map((item) => (
+                  <Link
+                    key={item.title}
+                    to={item.url}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${location.pathname === item.url
+                      ? 'bg-blue-100 text-blue-700 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span>{item.title}</span>
+                  </Link>
+                ))}
+                {isCoach && coachNavItems.map((item) => (
+                  <Link
+                    key={item.title}
+                    to={item.url}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${location.pathname === item.url
+                      ? 'bg-purple-100 text-purple-700 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span>{item.title}</span>
+                  </Link>
+                ))}
+                {isAdmin && adminNavItems.map((item) => (
+                  <Link
+                    key={item.title}
+                    to={item.url}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${location.pathname === item.url
+                      ? 'bg-red-100 text-red-700 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span>{item.title}</span>
+                  </Link>
+                ))}
+              </nav>
 
-              <Button onClick={handleLogout} variant="ghost" className="w-full justify-start text-slate-600 hover:bg-slate-100">
-                <LogOut className="w-5 h-5 ml-3" />
-                <span>התנתקות</span>
-              </Button>
+              <div className="p-4 mt-auto space-y-4">
+                {/* Demo Mode Toggle */}
+                <DemoModeToggle />
+
+                <Button onClick={handleLogout} variant="ghost" className="w-full justify-start text-slate-600 hover:bg-slate-100">
+                  <LogOut className="w-5 h-5 ml-3" />
+                  <span>התנתקות</span>
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-
+        )}
         {/* Main content area */}
         <div className="flex flex-col flex-1 w-full md:w-auto overflow-hidden">
-          {/* Mobile Header */}
-          <header className="md:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-sm border-b">
-            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
-              <Menu className="w-6 h-6" />
-            </Button>
-            <Link to={createPageUrl("Dashboard")} className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-                <Apple className="w-5 h-5 text-white" />
-              </div>
-            </Link>
-          </header>
+          {/* Mobile Header: logo centered, no menu button */}
+          {isMobile && (
+            <>
+              <header className="flex items-center justify-center p-4 bg-white/80 backdrop-blur-sm">
+                <Link to={createPageUrl("Dashboard")} className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
+                    <Apple className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                    NutriTrack
+                  </span>
+                </Link>
+              </header>
+              <div className="border-b border-gray-200 dark:border-gray-700 w-full" />
+            </>
+          )}
+          {/* Desktop Header: unchanged, if any */}
 
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto pb-16">{/* Add bottom padding for BottomNav */}
             {children}
           </main>
+          <BottomNav />
         </div>
       </div>
 
       {/* Floating Chat Button and Panel */}
       {user && (
         <>
-          <div className="fixed bottom-4 left-4 z-40">
+          <div className="fixed left-4 z-50 bottom-24 md:bottom-4">
             <button
               className="w-16 h-16 bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110 flex items-center justify-center"
               onClick={() => setIsChatOpen(true)}
@@ -564,18 +576,20 @@ ${imageUrl ?
 
           <AnimatePresence>
             {isChatOpen && (
-              <FloatingChatPanel
-                onClose={() => setIsChatOpen(false)}
-                messages={messages}
-                newMessage={newMessage}
-                setNewMessage={setNewMessage}
-                isLoading={isLoading}
-                uploadedImage={uploadedImage}
-                setUploadedImage={setUploadedImage}
-                handleSendMessage={handleSendMessage}
-                handleFileUpload={handleFileUpload}
-                filteredFoods={getFilteredFoods}
-              />
+              <div className="fixed inset-0 z-[60] flex items-end justify-center md:items-center md:justify-center">
+                <FloatingChatPanel
+                  onClose={() => setIsChatOpen(false)}
+                  messages={messages}
+                  newMessage={newMessage}
+                  setNewMessage={setNewMessage}
+                  isLoading={isLoading}
+                  uploadedImage={uploadedImage}
+                  setUploadedImage={setUploadedImage}
+                  handleSendMessage={handleSendMessage}
+                  handleFileUpload={handleFileUpload}
+                  filteredFoods={getFilteredFoods}
+                />
+              </div>
             )}
           </AnimatePresence>
         </>
