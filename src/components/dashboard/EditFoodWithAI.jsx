@@ -16,7 +16,7 @@ export default function EditFoodWithAI({ entry, onClose, onSave }) {
 
   const handleEditRequest = async () => {
     if (!editRequest.trim()) return;
-    
+
     setIsProcessing(true);
     setError(null);
 
@@ -152,19 +152,19 @@ export default function EditFoodWithAI({ entry, onClose, onSave }) {
               </div>
               <div>
                 <span className="text-slate-600">קלוריות: </span>
-                <span className="font-medium">{entry.calories}</span>
+                <span className="font-medium">{Number(entry.calories).toFixed(1)}</span>
               </div>
               <div>
                 <span className="text-slate-600">חלבון: </span>
-                <span className="font-medium">{entry.protein || 0}g</span>
+                <span className="font-medium">{Number(entry.protein || 0).toFixed(1)}g</span>
               </div>
               <div>
                 <span className="text-slate-600">פחמימות: </span>
-                <span className="font-medium">{entry.carbs || 0}g</span>
+                <span className="font-medium">{Number(entry.carbs || 0).toFixed(1)}g</span>
               </div>
               <div>
                 <span className="text-slate-600">שומן: </span>
-                <span className="font-medium">{entry.fat || 0}g</span>
+                <span className="font-medium">{Number(entry.fat || 0).toFixed(1)}g</span>
               </div>
               <div>
                 <span className="text-slate-600">כמות: </span>
