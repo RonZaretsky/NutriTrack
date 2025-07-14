@@ -284,11 +284,11 @@ export default function TraineeDetailsPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-600">
-                      {totals.calories.toLocaleString()} / {targetCalories.toLocaleString()} קלוריות
+                      {Number(totals.calories).toLocaleString(undefined, { maximumFractionDigits: 1 })} / {Number(targetCalories).toLocaleString(undefined, { maximumFractionDigits: 1 })} קלוריות
                     </span>
                     <span className={`font-medium ${progressPercentage <= 90 ? 'text-green-600' :
-                        progressPercentage <= 100 ? 'text-orange-600' :
-                          'text-red-600'
+                      progressPercentage <= 100 ? 'text-orange-600' :
+                        'text-red-600'
                       }`}>
                       {Math.round(progressPercentage)}%
                     </span>
@@ -296,8 +296,8 @@ export default function TraineeDetailsPage() {
                   <Progress
                     value={progressPercentage}
                     className={`h-3 ${progressPercentage <= 90 ? 'bg-green-100' :
-                        progressPercentage <= 100 ? 'bg-orange-100' :
-                          'bg-red-100'
+                      progressPercentage <= 100 ? 'bg-orange-100' :
+                        'bg-red-100'
                       }`}
                   />
                 </div>
@@ -333,7 +333,7 @@ export default function TraineeDetailsPage() {
                           </Pie>
                           <Tooltip
                             formatter={(value, name, props) => [
-                              `${value}% (${props.payload.grams.toFixed(1)}g)`,
+                              `${value}% (${Number(props.payload.grams).toFixed(1)}g)`,
                               props.payload.name
                             ]}
                           />
@@ -349,7 +349,7 @@ export default function TraineeDetailsPage() {
                             style={{ backgroundColor: macro.color }}
                           />
                           <div className="text-sm font-semibold">{macro.name}</div>
-                          <div className="text-xs text-slate-600">{macro.grams.toFixed(1)}g</div>
+                          <div className="text-xs text-slate-600">{Number(macro.grams).toFixed(1)}g</div>
                         </div>
                       ))}
                     </div>
@@ -444,11 +444,11 @@ export default function TraineeDetailsPage() {
                     <div className="grid grid-cols-3 gap-2">
                       <div className="p-3 bg-blue-50 rounded-lg">
                         <div className="text-sm text-blue-600">משקל התחלתי</div>
-                        <div className="text-xl font-bold">{weightData[0]?.weight?.toFixed(1)} ק"ג</div>
+                        <div className="text-xl font-bold">{Number(weightData[0]?.weight).toFixed(1)} ק"ג</div>
                       </div>
                       <div className="p-3 bg-green-50 rounded-lg">
                         <div className="text-sm text-green-600">משקל נוכחי</div>
-                        <div className="text-xl font-bold">{weightData[weightData.length - 1]?.weight?.toFixed(1)} ק"ג</div>
+                        <div className="text-xl font-bold">{Number(weightData[weightData.length - 1]?.weight).toFixed(1)} ק"ג</div>
                       </div>
                       <div className="p-3 bg-purple-50 rounded-lg">
                         <div className="text-sm text-purple-600">שינוי כולל</div>
@@ -459,7 +459,7 @@ export default function TraineeDetailsPage() {
                             : 'text-gray-600'
                           }`}>
                           {(weightData[weightData.length - 1].weight - weightData[0].weight) > 0 ? '+' : ''}
-                          {(weightData[weightData.length - 1].weight - weightData[0].weight).toFixed(1)} ק"ג
+                          {Number(weightData[weightData.length - 1].weight - weightData[0].weight).toFixed(1)} ק"ג
                         </div>
                       </div>
                     </div>

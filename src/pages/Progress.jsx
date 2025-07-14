@@ -184,7 +184,7 @@ export default function Progress() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-slate-900">
-                {userProfile?.daily_calories || 0}
+                {Number(userProfile?.daily_calories || 0).toFixed(1)}
               </div>
               <p className="text-sm text-slate-600">קלוריות</p>
               {userProfile && (
@@ -204,7 +204,7 @@ export default function Progress() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-slate-900">
-                {Math.round(getWeeklyAverage()).toLocaleString()}
+                {Number(getWeeklyAverage()).toLocaleString(undefined, { maximumFractionDigits: 1 })}
               </div>
               <p className="text-sm text-slate-600">קלוריות ביום</p>
               {userProfile && (
@@ -314,13 +314,12 @@ export default function Progress() {
                   </div>
                   <div className="p-3 bg-purple-50 rounded-lg">
                     <div className="text-sm text-purple-600">שינוי כולל</div>
-                    <div className={`text-xl font-bold ${
-                      (weightData[weightData.length - 1].weight - weightData[0].weight) > 0
+                    <div className={`text-xl font-bold ${(weightData[weightData.length - 1].weight - weightData[0].weight) > 0
                         ? 'text-red-600'
                         : (weightData[weightData.length - 1].weight - weightData[0].weight) < 0
-                        ? 'text-green-600'
-                        : 'text-gray-600'
-                    }`}>
+                          ? 'text-green-600'
+                          : 'text-gray-600'
+                      }`}>
                       {(weightData[weightData.length - 1].weight - weightData[0].weight) > 0 ? '+' : ''}
                       {(weightData[weightData.length - 1].weight - weightData[0].weight).toFixed(1)} ק"ג
                     </div>
@@ -346,9 +345,8 @@ export default function Progress() {
                 const isToday = index === weeklyData.length - 1;
 
                 return (
-                  <div key={day.date} className={`p-4 rounded-xl border-2 ${
-                    isToday ? 'border-blue-300 bg-blue-50' : 'border-slate-200 bg-white'
-                  }`}>
+                  <div key={day.date} className={`p-4 rounded-xl border-2 ${isToday ? 'border-blue-300 bg-blue-50' : 'border-slate-200 bg-white'
+                    }`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <div className="text-sm font-medium text-slate-900">
@@ -365,7 +363,7 @@ export default function Progress() {
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-slate-900">
-                          {day.calories.toLocaleString()}
+                          {Number(day.calories).toLocaleString(undefined, { maximumFractionDigits: 1 })}
                         </div>
                         <div className="text-xs text-slate-500">
                           {day.entries} רישומים
@@ -376,11 +374,10 @@ export default function Progress() {
                     <div className="flex items-center gap-2 mb-2">
                       <div className="flex-1 bg-slate-200 rounded-full h-2">
                         <div
-                          className={`h-2 rounded-full ${
-                            percentage >= 100 ? 'bg-green-500' :
-                            percentage >= 80 ? 'bg-blue-500' :
-                            percentage >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                          }`}
+                          className={`h-2 rounded-full ${percentage >= 100 ? 'bg-green-500' :
+                              percentage >= 80 ? 'bg-blue-500' :
+                                percentage >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                            }`}
                           style={{ width: `${Math.min(percentage, 100)}%` }}
                         />
                       </div>
@@ -426,13 +423,13 @@ export default function Progress() {
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600">סך קלוריות</span>
                   <span className="font-bold text-2xl text-slate-900">
-                    {Math.round(monthlyStats.totalCalories || 0).toLocaleString()}
+                    {Number(monthlyStats.totalCalories || 0).toLocaleString(undefined, { maximumFractionDigits: 1 })}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600">ממוצע יומי</span>
                   <span className="font-bold text-xl text-slate-900">
-                    {Math.round(monthlyStats.avgDailyCalories || 0).toLocaleString()}
+                    {Number(monthlyStats.avgDailyCalories || 0).toLocaleString(undefined, { maximumFractionDigits: 1 })}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
