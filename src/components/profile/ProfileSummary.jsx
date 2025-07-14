@@ -18,8 +18,10 @@ import {
 } from "@/components/ui/dialog";
 import { User as UserIcon, Edit, Save, Target, Activity, Flame, Ruler, Scale, Calendar, CheckCircle, TrendingUp, TrendingDown, Info, BrainCircuit, HeartHandshake, UserX } from 'lucide-react';
 import { logEvent } from '@/components/utils/logger';
+import { useNavigate } from "react-router-dom";
 
 export default function ProfileSummary({ user, userProfile, onEditGoals, onProfileUpdate }) {
+  const navigate = useNavigate();
   const [isEditingName, setIsEditingName] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [isExplanationModalOpen, setIsExplanationModalOpen] = useState(false);
@@ -150,7 +152,7 @@ export default function ProfileSummary({ user, userProfile, onEditGoals, onProfi
 
   return (
     <div className="p-4 md:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen" dir="rtl">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-4xl mx-auto space-y-8 pb-24">
         <div className="text-center">
           {isEditingName ? (
             <div className="flex items-center justify-center gap-2">

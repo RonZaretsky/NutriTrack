@@ -6,8 +6,11 @@ import ProfileWizard from "@/components/profile/ProfileWizard";
 import ProfileSummary from "@/components/profile/ProfileSummary";
 import { Apple } from "lucide-react";
 import { logEvent } from '@/components/utils/logger';
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 export default function Profile() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -29,7 +32,7 @@ export default function Profile() {
       const profiles = await userProfileApi.filter({ created_by: currentUser.email });
       console.log('Profile - Found profiles:', profiles);
       console.log('Profile - Current user email:', currentUser.email);
-      
+
       if (profiles.length > 0) {
         const profile = profiles[0];
         console.log('Profile - Using profile:', profile);
@@ -67,7 +70,7 @@ export default function Profile() {
     await loadProfileData();
     console.log('Profile - Wizard save completed, profile data loaded');
   };
-  
+
   const handleWizardCancel = () => {
     logEvent('Profile', 'WIZARD_CANCEL');
     // Only allow cancel if a profile already exists
@@ -93,8 +96,12 @@ export default function Profile() {
     return <ProfileWizard existingProfile={userProfile} onSave={handleWizardSave} onCancel={handleWizardCancel} />;
   }
 
-  return <ProfileSummary user={user} userProfile={userProfile} onEditGoals={() => {
-    logEvent('Profile', 'CLICK_EDIT_GOALS');
-    setIsEditing(true);
-  }} onProfileUpdate={loadProfileData} />;
+  return (
+    <div>
+      <ProfileSummary user={user} userProfile={userProfile} onEditGoals={() => {
+        logEvent('Profile', 'CLICK_EDIT_GOALS');
+        setIsEditing(true);
+      }} onProfileUpdate={loadProfileData} />
+    </div>
+  );
 }

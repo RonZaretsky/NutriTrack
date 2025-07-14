@@ -474,18 +474,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        {/* Date Navigation */}
-        <div className="flex items-center justify-center gap-4 mt-4 mb-4">
-          <Button variant="outline" size="icon" onClick={handlePreviousDay}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-          <h2 className="text-xl font-semibold text-slate-800 w-64 text-center">
-            {isToday(selectedDate) ? "היום" : format(selectedDate, 'EEEE, d MMMM', { locale: he })}
-          </h2>
-          <Button variant="outline" size="icon" onClick={handleNextDay} disabled={isToday(selectedDate)}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-        </div>
       </div>
 
       <div className="p-4 md:p-8 pt-0">
@@ -532,30 +520,43 @@ export default function Dashboard() {
         ))}
 
         {/* Basic Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-8">
-          <Card className="glass-effect shadow-lg">
-            <CardHeader>
-              <CardTitle>משקל נוכחי</CardTitle>
+        <div className="grid grid-cols-2 gap-4 mb-8 mt-8 place-items-center">
+          <Card className="glass-effect shadow-lg aspect-square flex flex-col items-center justify-center max-w-[140px] min-h-[120px] w-full p-1">
+            <CardHeader className="p-1 pb-0">
+              <CardTitle className="text-xs">משקל נוכחי</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">
+            <CardContent className="flex flex-col items-center justify-center flex-1 p-1">
+              <div className="text-lg font-bold text-green-600">
                 {userProfile?.weight || 0}
               </div>
-              <p className="text-slate-600">קילוגרם</p>
+              <p className="text-slate-600 text-xs">קילוגרם</p>
             </CardContent>
           </Card>
 
-          <Card className="glass-effect shadow-lg">
-            <CardHeader>
-              <CardTitle>ארוחות היום</CardTitle>
+          <Card className="glass-effect shadow-lg aspect-square flex flex-col items-center justify-center max-w-[140px] min-h-[120px] w-full p-1">
+            <CardHeader className="p-1 pb-0">
+              <CardTitle className="text-xs">ארוחות היום</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-purple-600">
+            <CardContent className="flex flex-col items-center justify-center flex-1 p-1">
+              <div className="text-lg font-bold text-purple-600">
                 {todaysEntries.length}
               </div>
-              <p className="text-slate-600">פריטים</p>
+              <p className="text-slate-600 text-xs">פריטים</p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Date Navigation - moved below the cards */}
+        <div className="flex items-center justify-center gap-4 mb-8">
+          <Button variant="outline" size="icon" onClick={handlePreviousDay}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+          <h2 className="text-xl font-semibold text-slate-800 w-64 text-center">
+            {isToday(selectedDate) ? "היום" : format(selectedDate, 'EEEE, d MMMM', { locale: he })}
+          </h2>
+          <Button variant="outline" size="icon" onClick={handleNextDay} disabled={isToday(selectedDate)}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
         </div>
 
         {/* Summary graph directly under date navigation */}

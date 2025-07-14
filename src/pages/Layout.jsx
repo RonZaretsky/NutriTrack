@@ -49,11 +49,6 @@ const navigationItems = [
     url: createPageUrl("Progress"),
     icon: TrendingUp,
   },
-  {
-    title: "חברים",
-    url: createPageUrl("Friends"),
-    icon: Users,
-  },
 ];
 
 const coachNavItems = [
