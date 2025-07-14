@@ -4,7 +4,14 @@ import { Progress } from "@/components/ui/progress";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Flame, Target, TrendingUp, AlertTriangle } from "lucide-react";
 
-export default function SummaryGraph({ foods = [], dailyCalorieTarget = 2000 }) {
+export default function SummaryGraph({ foods = [], dailyCalorieTarget = 2000, isLoading }) {
+  if (isLoading) {
+    return (
+      <div className="w-full flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
   // Calculate totals
   const totals = foods.reduce((acc, food) => ({
     calories: acc.calories + (food.calories || 0),
@@ -187,15 +194,15 @@ export default function SummaryGraph({ foods = [], dailyCalorieTarget = 2000 }) 
             {/* Macro breakdown always beside the chart on large screens, below on mobile */}
             <div className="grid grid-cols-3 gap-2 text-center text-xs mt-4 w-full lg:mt-0 lg:w-1/2">
               <div className="p-2 bg-blue-50 rounded">
-                <div className="font-bold text-blue-700">{totals.protein}g</div>
+                <div className="font-bold text-blue-700">{Number(totals.protein).toFixed(1)}g</div>
                 <div className="text-blue-600">חלבון</div>
               </div>
               <div className="p-2 bg-orange-50 rounded">
-                <div className="font-bold text-orange-700">{totals.carbs}g</div>
+                <div className="font-bold text-orange-700">{Number(totals.carbs).toFixed(1)}g</div>
                 <div className="text-orange-600">פחמימות</div>
               </div>
               <div className="p-2 bg-red-50 rounded">
-                <div className="font-bold text-red-700">{totals.fat}g</div>
+                <div className="font-bold text-red-700">{Number(totals.fat).toFixed(1)}g</div>
                 <div className="text-red-600">שומן</div>
               </div>
             </div>

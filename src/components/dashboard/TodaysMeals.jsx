@@ -1,59 +1,101 @@
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 import { Pencil, Trash2 } from "lucide-react";
 
-export default function TodaysMeals({ entries, onDelete, onEditWithAI }) {
+export default function TodaysMeals({ entries, onDelete, onEditWithAI, isLoading }) {
+  if (isLoading) {
+    return (
+      <div className="w-full flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
   return (
     <div className="flex flex-wrap justify-center gap-6">
-      {entries.length === 0 ? (
-        <div className="text-center py-8 w-full">
-          <p className="text-slate-500">עדיין לא רשמת ארוחות היום</p>
-        </div>
-      ) : (
-        entries.map((entry) => (
-          <Card key={entry.id} className="w-full max-w-xs bg-white rounded-2xl shadow p-0 flex-shrink-0 h-[370px] flex flex-col">
-            <CardContent className="p-6 flex flex-col h-full">
-              {/* Title and Time (fixed at top, ~20% height) */}
-              <div className="mb-2" style={{ minHeight: '20%', flex: '0 0 20%' }}>
-                <h2 className="text-2xl font-bold leading-tight mb-1">{entry.food_name}</h2>
-                <p className="text-gray-400 text-base mb-2">{entry.time || ''}</p>
-              </div>
-
-              {/* Centered Calories and Macros */}
-              <div className="flex-1 flex flex-col justify-center">
-                <div className="flex flex-col items-center mb-2">
-                  <span className="text-4xl font-extrabold text-black leading-none">{entry.calories}</span>
-                  <span className="text-lg text-gray-500 mb-1">קלוריות</span>
-                </div>
-                <div className="flex justify-between text-center mb-2">
-                  <div>
-                    <span className="block text-purple-700 font-medium text-base">חלבון</span>
-                    <span className="block text-black font-bold text-lg">{entry.protein} גרם</span>
+      <AnimatePresence>
+        {entries.length === 0 ? (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="w-full text-center py-8"
+          >
+            <p className="text-gray-500 dark:text-gray-400">עדיין לא רשמת ארוחות היום</p>
+          </motion.div>
+        ) : (
+          entries.map((entry) => (
+            <motion.div
+              key={entry.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="w-full max-w-2xl"
+            >
+              <Card className="backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 border border-gray-200/50 dark:border-gray-700/50 rounded-2xl shadow-lg overflow-hidden flex-shrink-0 min-h-[180px] flex">
+                <CardContent className="p-6 flex flex-col-reverse md:flex-row-reverse h-full w-full items-center gap-6 md:gap-8">
+                  {/* Action Buttons (side by side on mobile, stacked on desktop) */}
+                  <div className="flex flex-row md:flex-col gap-3 w-full md:w-auto justify-center items-center md:ml-6">
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 px-4 h-10"
+                      onClick={() => onEditWithAI(entry)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                      ערוך
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="flex items-center gap-2 px-4 h-10"
+                      onClick={() => onDelete(entry.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      מחק
+                    </Button>
                   </div>
-                  <div>
-                    <span className="block text-blue-600 font-medium text-base">פחמימות</span>
-                    <span className="block text-black font-bold text-lg">{entry.carbs} גרם</span>
+                  {/* Main Content (right side) */}
+                  <div className="flex-1 flex flex-col justify-between h-full w-full">
+                    {/* Title and Time */}
+                    <div className="mb-3">
+                      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                        {entry.food_name}
+                      </h2>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {entry.time || ''}
+                      </p>
+                    </div>
+                    <div className="flex flex-col md:flex-row items-center gap-4 md:gap-10 w-full">
+                      {/* Calories */}
+                      <div className="flex flex-col items-center justify-center min-w-[90px] mb-2 md:mb-0">
+                        <span className="text-xl font-bold text-black dark:text-white">{Number(entry.calories).toFixed(1)}</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 mt-1">קלוריות</span>
+                      </div>
+                      {/* Macros */}
+                      <div className="flex flex-row gap-6 md:gap-8 flex-1 justify-end">
+                        <div className="text-center">
+                          <span className="block font-medium text-sm text-purple-700">חלבון</span>
+                          <span className="block font-semibold text-base text-black dark:text-white">{Number(entry.protein).toFixed(1)} ג׳</span>
+                        </div>
+                        <div className="text-center">
+                          <span className="block font-medium text-sm text-blue-600">פחמימות</span>
+                          <span className="block font-semibold text-base text-black dark:text-white">{Number(entry.carbs).toFixed(1)} ג׳</span>
+                        </div>
+                        <div className="text-center">
+                          <span className="block font-medium text-sm text-yellow-700">שומן</span>
+                          <span className="block font-semibold text-base text-black dark:text-white">{Number(entry.fat).toFixed(1)} ג׳</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="block text-yellow-700 font-medium text-base">שומן</span>
-                    <span className="block text-black font-bold text-lg">{entry.fat} גרם</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons (fixed at bottom) */}
-              <div className="flex gap-3 mt-2 pt-2 w-full justify-between">
-                <Button variant="default" className="flex-1" onClick={() => onEditWithAI(entry)}>
-                  ערוך
-                </Button>
-                <Button variant="destructive" className="flex-1" onClick={() => onDelete(entry.id)}>
-                  מחק
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))
-      )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -57,38 +57,37 @@ export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [dailyFoods, setDailyFoods] = useState([]);
 
+  // LOG STATE ON EVERY RENDER
+  console.log('Dashboard RENDER: selectedDate:', selectedDate);
+  console.log('Dashboard RENDER: todaysEntries:', todaysEntries);
+  console.log('Dashboard RENDER: dailyFoods:', dailyFoods);
+
   // Ref to track if data has been loaded to prevent infinite loops
   const dataLoadedRef = useRef(false);
   const lastAuthStateRef = useRef(null);
+  // Ref to track the latest data request
+  const latestRequestRef = useRef(0);
 
   useEffect(() => {
     // Create a unique auth state identifier
     const currentAuthState = `${authLoading}-${isAuthenticated}-${userRole}`;
 
-    // Skip if auth state hasn't changed
-    if (lastAuthStateRef.current === currentAuthState) {
-      return;
-    }
-    lastAuthStateRef.current = currentAuthState;
-
     console.log('Dashboard - Auth state changed:', { authLoading, isAuthenticated, userRole });
+    console.log('Dashboard - selectedDate:', selectedDate);
 
-    // Only load data when auth is not loading and user is authenticated and has role
-    if (!authLoading && isAuthenticated && userRole && !dataLoadedRef.current) {
-      console.log('Dashboard - Loading data for authenticated user');
+    // Always load data when not loading, authenticated, and userRole is set
+    if (!authLoading && isAuthenticated && userRole) {
+      console.log('Dashboard - Loading data for authenticated user or date change');
       logEvent('Dashboard', 'PAGE_LOAD');
-      dataLoadedRef.current = true;
       loadData();
     } else if (authLoading) {
       // Reset loading state when auth is loading
       console.log('Dashboard - Auth loading, resetting loading state');
       setIsLoading(false);
-      dataLoadedRef.current = false;
     } else if (!isAuthenticated) {
       // Reset when user is not authenticated
       console.log('Dashboard - User not authenticated, resetting state');
       setIsLoading(false);
-      dataLoadedRef.current = false;
       // Clear user data when not authenticated
       setUser(null);
       setUserProfile(null);
@@ -122,13 +121,9 @@ export default function Dashboard() {
   }, []);
 
   const loadData = async () => {
-    console.log('Dashboard - Starting loadData');
-
-    // Prevent multiple simultaneous calls
-    if (isLoading) {
-      console.log('Dashboard - Already loading, skipping');
-      return;
-    }
+    // Increment the request token
+    const requestId = ++latestRequestRef.current;
+    console.log('Dashboard - Starting loadData for date:', selectedDate);
 
     // Don't load data if user is not authenticated
     if (!isAuthenticated) {
@@ -179,6 +174,7 @@ export default function Dashboard() {
       // Fetch all data in parallel with timeouts
       const today = format(selectedDate, 'yyyy-MM-dd');
       console.log('Dashboard - Fetching all data in parallel for:', today);
+      console.log('Dashboard - About to call getFoodEntriesByUserAndDate with:', currentUser.email, today);
 
       // Show loading progress
       setError(null);
@@ -197,9 +193,19 @@ export default function Dashboard() {
       const [plannedCalories, requests, foodEntries, weightEntries] = await Promise.allSettled([
         createTimeoutPromise(getPlannedCaloriesForDate(currentUser.email, selectedDate)),
         createTimeoutPromise(coachRequestApi.filter({ trainee_email: currentUser.email })),
-        createTimeoutPromise(getFoodEntriesByUserAndDate(currentUser.email, today)),
+        createTimeoutPromise((async () => {
+          const result = await getFoodEntriesByUserAndDate(currentUser.email, today);
+          console.log('Dashboard - getFoodEntriesByUserAndDate result for', today, ':', result);
+          return result;
+        })()),
         createTimeoutPromise(weightEntryApi.filter({ created_by: currentUser.email, entry_date: today }))
       ]);
+
+      // Only update state if this is the latest request
+      if (requestId !== latestRequestRef.current) {
+        console.log('Dashboard - Ignoring outdated loadData result for requestId', requestId);
+        return;
+      }
 
       // Handle results
       const todayPlannedCalories = plannedCalories.status === 'fulfilled' ? plannedCalories.value : 0;
@@ -220,7 +226,10 @@ export default function Dashboard() {
       setDailyFoods(todaysFoodEntries); // Set dailyFoods for the graph
       setWeightUpdatedToday(todaysWeightEntries.length > 0);
 
-      console.log('Dashboard - All data loaded successfully');
+      console.log('Dashboard - All data loaded successfully for date:', selectedDate);
+      console.log('Dashboard - todaysEntries:', todaysFoodEntries);
+      console.log('Dashboard - dailyFoods:', todaysFoodEntries);
+      console.log('Dashboard - plannedCalories:', todayPlannedCalories);
 
     } catch (error) {
       console.error("Dashboard - Error loading data:", error);
@@ -235,8 +244,11 @@ export default function Dashboard() {
       setDailyFoods([]); // Clear dailyFoods on error
       setWeightUpdatedToday(false);
     } finally {
-      console.log('Dashboard - Setting loading to false');
-      setIsLoading(false);
+      // Only clear loading if this is the latest request
+      if (requestId === latestRequestRef.current) {
+        console.log('Dashboard - Setting loading to false');
+        setIsLoading(false);
+      }
     }
   };
 
@@ -406,16 +418,26 @@ export default function Dashboard() {
   };
 
   const handlePreviousDay = () => {
-    setSelectedDate(prevDate => subDays(prevDate, 1));
+    console.log('Dashboard - handlePreviousDay clicked. Current selectedDate:', selectedDate);
+    setSelectedDate(prevDate => {
+      const newDate = subDays(prevDate, 1);
+      console.log('Dashboard - handlePreviousDay new selectedDate:', newDate);
+      return newDate;
+    });
   };
   const handleNextDay = () => {
     if (!isToday(selectedDate)) {
-      setSelectedDate(prevDate => addDays(prevDate, 1));
+      console.log('Dashboard - handleNextDay clicked. Current selectedDate:', selectedDate);
+      setSelectedDate(prevDate => {
+        const newDate = addDays(prevDate, 1);
+        console.log('Dashboard - handleNextDay new selectedDate:', newDate);
+        return newDate;
+      });
     }
   };
 
-  // Show loading spinner while auth is loading or dashboard is loading
-  if (authLoading || isLoading) {
+  // Show loading spinner only while auth is loading or user is not authenticated
+  if (authLoading || !isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
@@ -560,7 +582,7 @@ export default function Dashboard() {
         </div>
 
         {/* Summary graph directly under date navigation */}
-        <SummaryGraph foods={dailyFoods} dailyCalorieTarget={plannedCalories || userProfile?.daily_calories || 2000} />
+        <SummaryGraph foods={dailyFoods} dailyCalorieTarget={plannedCalories || userProfile?.daily_calories || 2000} isLoading={isLoading} />
 
         {/* Weight Modal */}
         {showWeightModal && (
@@ -608,7 +630,7 @@ export default function Dashboard() {
         )}
 
         {/* Today's Entries */}
-        <TodaysMeals entries={todaysEntries} onDelete={handleDeleteEntry} onEditWithAI={handleEditWithAI} />
+        <TodaysMeals entries={todaysEntries} onDelete={handleDeleteEntry} onEditWithAI={handleEditWithAI} isLoading={isLoading} />
       </div>
     </div>
   );
