@@ -13,7 +13,7 @@ import { he } from "date-fns/locale";
 import { logEvent } from '@/components/utils/logger';
 import { getPlannedCaloriesForDate } from '@/components/utils/weeklyPlanUtils';
 
-export default function NutritionalSummaryPage() {
+export default function NutritionalSummary() {
   const [dailyFoods, setDailyFoods] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -29,7 +29,7 @@ export default function NutritionalSummaryPage() {
     setIsLoading(true);
     try {
       const user = await userApi.me();
-      
+
       const profiles = await userProfileApi.filter({ created_by: user.email });
       if (profiles.length > 0) {
         setUserProfile(profiles[0]);
@@ -40,9 +40,9 @@ export default function NutritionalSummaryPage() {
       setPlannedCalories(dayPlannedCalories);
 
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      
+
       const dayFoodEntries = await getFoodEntriesByUserAndDate(user.email, dateStr);
-      
+
       const foodsForGraph = dayFoodEntries.map(entry => ({
         name: entry.food_name,
         calories: Number(entry.calories) || 0,
@@ -51,7 +51,7 @@ export default function NutritionalSummaryPage() {
         fat: Number(entry.fat) || 0,
         category: entry.category || 'other'
       }));
-      
+
       setDailyFoods(foodsForGraph);
 
     } catch (error) {
@@ -87,20 +87,20 @@ export default function NutritionalSummaryPage() {
   const totalMacroCalories = proteinCalories + carbCalories + fatCalories;
 
   const macroData = totalMacroCalories > 0 ? [
-    { 
-      name: 'חלבון', 
+    {
+      name: 'חלבון',
       value: Math.round((proteinCalories / totalMacroCalories) * 100),
       grams: totals.protein,
       color: '#3b82f6'
     },
-    { 
-      name: 'פחמימות', 
+    {
+      name: 'פחמימות',
       value: Math.round((carbCalories / totalMacroCalories) * 100),
       grams: totals.carbs,
       color: '#f97316'
     },
-    { 
-      name: 'שומן', 
+    {
+      name: 'שומן',
       value: Math.round((fatCalories / totalMacroCalories) * 100),
       grams: totals.fat,
       color: '#ef4444'
@@ -110,7 +110,7 @@ export default function NutritionalSummaryPage() {
   // Calculate progress using planned calories
   const targetCalories = plannedCalories || userProfile?.daily_calories || 2000;
   const progressPercentage = (totals.calories / targetCalories) * 100;
-  
+
   const getProgressColor = () => {
     if (progressPercentage <= 90) return 'bg-green-500';
     if (progressPercentage <= 100) return 'bg-orange-500';
@@ -213,31 +213,30 @@ export default function NutritionalSummaryPage() {
                   <div className="text-xs text-purple-600 mt-1">יעד מותאם לשבוע</div>
                 )}
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">
                     {totals.calories.toLocaleString()} / {targetCalories.toLocaleString()} קלוריות
                   </span>
-                  <span className={`font-medium ${
-                    progressPercentage <= 90 ? 'text-green-600' :
-                    progressPercentage <= 100 ? 'text-orange-600' :
-                    'text-red-600'
-                  }`}>
+                  <span className={`font-medium ${progressPercentage <= 90 ? 'text-green-600' :
+                      progressPercentage <= 100 ? 'text-orange-600' :
+                        'text-red-600'
+                    }`}>
                     {progressPercentage <= 90 ? 'בטווח תקין' :
-                     progressPercentage <= 100 ? 'קרוב לגבול' :
-                     'חריגה מהיעד'}
+                      progressPercentage <= 100 ? 'קרוב לגבול' :
+                        'חריגה מהיעד'}
                   </span>
                 </div>
                 <div className="w-full bg-slate-200 rounded-full h-4">
-                  <div 
+                  <div
                     className={`h-4 rounded-full transition-all duration-500 ${getProgressColor()}`}
                     style={{ width: `${Math.min(progressPercentage, 100)}%` }}
                   />
                 </div>
                 <div className="text-center text-sm text-slate-500">
-                  {targetCalories - totals.calories > 0 
-                    ? `נותרו ${(targetCalories - totals.calories).toLocaleString()} קלוריות` 
+                  {targetCalories - totals.calories > 0
+                    ? `נותרו ${(targetCalories - totals.calories).toLocaleString()} קלוריות`
                     : `חריגה של ${(totals.calories - targetCalories).toLocaleString()} קלוריות`
                   }
                 </div>
@@ -286,7 +285,7 @@ export default function NutritionalSummaryPage() {
                             <Cell key={`macro-cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip 
+                        <Tooltip
                           formatter={(value, name, props) => [
                             `${value}% (${props.payload.grams.toFixed(1)}g)`,
                             name
@@ -295,11 +294,11 @@ export default function NutritionalSummaryPage() {
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  
+
                   <div className="grid grid-cols-3 gap-4">
                     {macroData.map((macro, index) => (
                       <div key={index} className="text-center p-3 bg-slate-50 rounded-lg">
-                        <div 
+                        <div
                           className="w-4 h-4 rounded mx-auto mb-2"
                           style={{ backgroundColor: macro.color }}
                         />

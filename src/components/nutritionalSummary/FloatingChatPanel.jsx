@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   X
 } from "lucide-react";
-import NutritionCard from "@/components/aichat/NutritionCard";
+import NutritionCard from "@/components/nutritionalSummary/NutritionCard";
 
 export default function FloatingChatPanel({
   onClose,
@@ -65,31 +65,31 @@ export default function FloatingChatPanel({
         <CardContent className="p-0 flex-1 overflow-hidden">
           <div className="h-full overflow-y-auto p-4 space-y-4">
             {messages.map((message, index) => {
-               const structuredData = message.structured_data ? JSON.parse(message.structured_data) : null;
-               return (
-                 <div key={index} className="flex flex-col gap-3">
-                    {/* Message Bubble */}
-                    <div className={`flex gap-3 w-full ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
-                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.sender === 'user' ? 'bg-blue-500' : 'bg-gradient-to-br from-green-500 to-blue-500'}`}>
-                        {message.sender === 'user' ? <UserIcon className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
-                        </div>
-                        <div className={`p-3 rounded-2xl max-w-xs ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-white border'}`}>
-                            {message.image_url && <img src={message.image_url} alt="תמונת מזון" className="w-full h-auto object-cover rounded-lg mb-2" />}
-                            <p className="text-sm whitespace-pre-wrap">{message.message}</p>
-                            {message.calories_extracted && <Badge variant="outline" className="mt-2 bg-green-50 text-green-700"><CheckCircle2 className="w-3 h-3 ml-1" />{message.calories_extracted} קלוריות</Badge>}
-                        </div>
+              const structuredData = message.structured_data ? JSON.parse(message.structured_data) : null;
+              return (
+                <div key={index} className="flex flex-col gap-3">
+                  {/* Message Bubble */}
+                  <div className={`flex gap-3 w-full ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${message.sender === 'user' ? 'bg-blue-500' : 'bg-gradient-to-br from-green-500 to-blue-500'}`}>
+                      {message.sender === 'user' ? <UserIcon className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
                     </div>
+                    <div className={`p-3 rounded-2xl max-w-xs ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-white border'}`}>
+                      {message.image_url && <img src={message.image_url} alt="תמונת מזון" className="w-full h-auto object-cover rounded-lg mb-2" />}
+                      <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+                      {message.calories_extracted && <Badge variant="outline" className="mt-2 bg-green-50 text-green-700"><CheckCircle2 className="w-3 h-3 ml-1" />{message.calories_extracted} קלוריות</Badge>}
+                    </div>
+                  </div>
 
-                    {/* Nutrition Cards */}
-                    {structuredData?.foods && (
-                        <div className={`flex flex-col gap-3 ${message.sender === 'user' ? 'items-end' : 'items-start pl-11'}`}>
-                            {filteredFoods(structuredData.foods).map((food, foodIndex) => (
-                            <NutritionCard key={foodIndex} food={food} />
-                            ))}
-                        </div>
-                    )}
+                  {/* Nutrition Cards */}
+                  {structuredData?.foods && (
+                    <div className={`flex flex-col gap-3 ${message.sender === 'user' ? 'items-end' : 'items-start pl-11'}`}>
+                      {filteredFoods(structuredData.foods).map((food, foodIndex) => (
+                        <NutritionCard key={foodIndex} food={food} />
+                      ))}
+                    </div>
+                  )}
                 </div>
-               )
+              )
             })}
 
             {isLoading && (
@@ -102,12 +102,12 @@ export default function FloatingChatPanel({
           </div>
         </CardContent>
         <div className="p-4 border-t">
-           {uploadedImage && (
-              <div className="mb-2 relative w-24 h-24">
-                <img src={uploadedImage} alt="העלאה" className="w-full h-full object-cover rounded-lg"/>
-                <Button variant="outline" size="sm" className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0" onClick={() => setUploadedImage(null)}>×</Button>
-              </div>
-            )}
+          {uploadedImage && (
+            <div className="mb-2 relative w-24 h-24">
+              <img src={uploadedImage} alt="העלאה" className="w-full h-full object-cover rounded-lg" />
+              <Button variant="outline" size="sm" className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0" onClick={() => setUploadedImage(null)}>×</Button>
+            </div>
+          )}
           <div className="flex gap-2">
             <Input type="file" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
             <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isLoading}><ImageIcon className="w-4 h-4" /></Button>

@@ -1,7 +1,7 @@
 import Layout from "./Layout.jsx";
 import Dashboard from "./Dashboard";
 import Profile from "./Profile";
-import AIChat from "./AIChat";
+import NutritionalSummary from "./NutritionalSummary";
 import Progress from "./Progress";
 import Friends from "./Friends";
 import AdminLogs from "./AdminLogs";
@@ -28,7 +28,7 @@ import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-route
 const PAGES = {
     Dashboard: Dashboard,
     Profile: Profile,
-    AIChat: AIChat,
+    NutritionalSummary: NutritionalSummary,
     Progress: Progress,
     Friends: Friends,
     AdminLogs: AdminLogs,
@@ -55,7 +55,7 @@ function _getCurrentPage(url) {
 function PagesContent() {
     const location = useLocation();
     const currentPage = _getCurrentPage(location.pathname);
-    
+
     return (
         <Routes>
             {/* Public auth routes */}
@@ -66,7 +66,7 @@ function PagesContent() {
             <Route path="/auth/setup-check" element={<SetupCheck />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
-            
+
             {/* Protected routes with Layout */}
             <Route path="/" element={
                 <AuthChecker>
@@ -75,7 +75,7 @@ function PagesContent() {
                     </Layout>
                 </AuthChecker>
             } />
-            
+
             <Route path="/Dashboard" element={
                 <AuthChecker>
                     <Layout currentPageName="Dashboard">
@@ -83,7 +83,7 @@ function PagesContent() {
                     </Layout>
                 </AuthChecker>
             } />
-            
+
             <Route path="/Profile" element={
                 <AuthChecker>
                     <Layout currentPageName="Profile">
@@ -91,15 +91,15 @@ function PagesContent() {
                     </Layout>
                 </AuthChecker>
             } />
-            
-            <Route path="/AIChat" element={
+
+            <Route path="/NutritionalSummary" element={
                 <AuthChecker>
-                    <Layout currentPageName="AIChat">
-                        <AIChat />
+                    <Layout currentPageName="NutritionalSummary">
+                        <NutritionalSummary />
                     </Layout>
                 </AuthChecker>
             } />
-            
+
             <Route path="/Progress" element={
                 <AuthChecker>
                     <Layout currentPageName="Progress">
@@ -107,7 +107,7 @@ function PagesContent() {
                     </Layout>
                 </AuthChecker>
             } />
-            
+
             <Route path="/Friends" element={
                 <AuthChecker>
                     <Layout currentPageName="Friends">
@@ -115,7 +115,7 @@ function PagesContent() {
                     </Layout>
                 </AuthChecker>
             } />
-            
+
             <Route path="/AdminLogs" element={
                 <AuthChecker>
                     <Layout currentPageName="AdminLogs">
@@ -123,7 +123,7 @@ function PagesContent() {
                     </Layout>
                 </AuthChecker>
             } />
-            
+
             <Route path="/AdminUsers" element={
                 <AuthChecker>
                     <Layout currentPageName="AdminUsers">
@@ -131,7 +131,7 @@ function PagesContent() {
                     </Layout>
                 </AuthChecker>
             } />
-            
+
             <Route path="/Trainees" element={
                 <AuthChecker>
                     <Layout currentPageName="Trainees">
@@ -139,7 +139,7 @@ function PagesContent() {
                     </Layout>
                 </AuthChecker>
             } />
-            
+
             <Route path="/TraineeDetails" element={
                 <AuthChecker>
                     <Layout currentPageName="TraineeDetails">
@@ -147,7 +147,7 @@ function PagesContent() {
                     </Layout>
                 </AuthChecker>
             } />
-            
+
             <Route path="/WeeklyPlan" element={
                 <AuthChecker>
                     <Layout currentPageName="WeeklyPlan">
