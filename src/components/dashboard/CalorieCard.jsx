@@ -7,7 +7,7 @@ import { Flame, Target, TrendingUp, TrendingDown } from "lucide-react";
 export default function CalorieCard({ totalCalories, targetCalories, goal }) {
   const percentage = targetCalories > 0 ? (totalCalories / targetCalories) * 100 : 0;
   const remaining = Math.max(0, targetCalories - totalCalories);
-  
+
   const getStatusColor = () => {
     if (percentage < 80) return 'text-blue-500';
     if (percentage < 100) return 'text-green-500';
@@ -46,13 +46,13 @@ export default function CalorieCard({ totalCalories, targetCalories, goal }) {
       <CardContent className="space-y-4">
         <div className="text-center">
           <div className="text-4xl font-bold text-slate-900 mb-1">
-            {totalCalories.toLocaleString()}
+            {Number(totalCalories).toLocaleString(undefined, { maximumFractionDigits: 1 })}
           </div>
           <div className="text-sm text-slate-600">
-            מתוך {targetCalories.toLocaleString()} קלוריות
+            מתוך {Number(targetCalories).toLocaleString(undefined, { maximumFractionDigits: 1 })} קלוריות
           </div>
         </div>
-        
+
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-slate-600">התקדמות</span>
@@ -60,22 +60,22 @@ export default function CalorieCard({ totalCalories, targetCalories, goal }) {
               {Math.round(percentage)}% • {getStatusText()}
             </span>
           </div>
-          <Progress 
-            value={Math.min(percentage, 100)} 
+          <Progress
+            value={Math.min(percentage, 100)}
             className="h-3 bg-slate-200"
           />
         </div>
-        
+
         <div className="flex justify-between items-center text-sm">
           <div className="text-center">
             <div className="font-semibold text-slate-900">
-              {remaining.toLocaleString()}
+              {Number(remaining).toLocaleString(undefined, { maximumFractionDigits: 1 })}
             </div>
             <div className="text-slate-500">נותרו</div>
           </div>
           <div className="text-center">
             <div className="font-semibold text-slate-900">
-              {Math.max(0, totalCalories - targetCalories).toLocaleString()}
+              {Number(Math.max(0, totalCalories - targetCalories)).toLocaleString(undefined, { maximumFractionDigits: 1 })}
             </div>
             <div className="text-slate-500">עודף</div>
           </div>

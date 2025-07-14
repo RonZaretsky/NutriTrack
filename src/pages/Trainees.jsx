@@ -229,14 +229,14 @@ export default function TraineesPage() {
                                             <div>
                                                 <div className="flex justify-between text-sm mb-1">
                                                     <span>התקדמות קלורית</span>
-                                                    <span>{Math.round(trainee.totalCalories)} / {targetCalories}</span>
+                                                    <span>{Number(trainee.totalCalories).toFixed(1)} / {Number(targetCalories).toFixed(1)}</span>
                                                 </div>
                                                 <Progress value={progressValue} />
                                             </div>
                                             <div className="text-xs text-slate-600 grid grid-cols-3 gap-2">
                                                 <p><strong>גיל:</strong> {trainee.age}</p>
-                                                <p><strong>משקל:</strong> {trainee.weight} ק"ג</p>
-                                                <p><strong>גובה:</strong> {trainee.height} ס"מ</p>
+                                                <p><strong>משקל:</strong> {Number(trainee.weight).toFixed(1)} ק"ג</p>
+                                                <p><strong>גובה:</strong> {Number(trainee.height).toFixed(1)} ס"מ</p>
                                             </div>
                                             <div className="text-center text-sm text-slate-500 pt-2 border-t">
                                                 לחץ לצפייה מפורטת

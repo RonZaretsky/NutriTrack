@@ -27,7 +27,7 @@ export default function Friends() {
     logEvent('Friends', 'PAGE_LOAD');
     loadFriendships();
   }, []);
-  
+
   const loadFriendships = async () => {
     setIsLoading(true);
     setError(null);
@@ -52,7 +52,7 @@ export default function Friends() {
         if (f.status === 'pending') pendingReceived.push(f);
         else if (f.status === 'accepted') {
           // Only add if not already in accepted list (avoid duplicates)
-          if (!accepted.find(af => 
+          if (!accepted.find(af =>
             (af.inviter_email === f.inviter_email && af.invitee_email === f.invitee_email) ||
             (af.inviter_email === f.invitee_email && af.invitee_email === f.inviter_email)
           )) {
@@ -60,10 +60,10 @@ export default function Friends() {
           }
         }
       });
-      
+
       setPendingSent(pendingSent);
       setPendingReceived(pendingReceived);
-      
+
       // Process the accepted friends to get their details and progress
       const friendData = await Promise.all(
         accepted.map(async (friendship) => {
@@ -74,7 +74,7 @@ export default function Friends() {
           const today = new Date();
           const weekStart = startOfWeek(today, { weekStartsOn: 0 });
           const weekStartStr = format(weekStart, 'yyyy-MM-dd');
-          
+
           const recentEntries = await weightEntryApi.filter(
             { created_by: friendEmail, entry_date: { $gte: weekStartStr } }
           );
@@ -154,7 +154,7 @@ export default function Friends() {
       console.error(err);
     }
   };
-  
+
   const handleInvitation = async (friendshipId, newStatus) => {
     logEvent('Friends', 'RESPOND_TO_INVITE', { friendshipId, newStatus });
     try {
@@ -186,7 +186,7 @@ export default function Friends() {
         console.error(err);
       }
     } else {
-        logEvent('Friends', 'CANCEL_INVITE_ABORTED', { friendshipId });
+      logEvent('Friends', 'CANCEL_INVITE_ABORTED', { friendshipId });
     }
   };
 
@@ -194,17 +194,17 @@ export default function Friends() {
     if (kg === null) return <TableCell className="text-center text-slate-500">-</TableCell>;
     const Icon = kg > 0 ? TrendingUp : kg < 0 ? TrendingDown : Minus;
     const color = kg > 0 ? "text-red-500" : kg < 0 ? "text-green-500" : "text-slate-500";
-    
+
     return (
       <TableCell className={`text-center font-medium ${color}`}>
         <div className="flex items-center justify-center gap-2">
           <Icon className="w-4 h-4" />
-          <span>{kg.toFixed(1)} ק״ג ({percent.toFixed(1)}%)</span>
+          <span>{Number(kg).toFixed(1)} ק״ג ({Number(percent).toFixed(1)}%)</span>
         </div>
       </TableCell>
     );
   };
-  
+
   return (
     <div className="p-4 md:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen" dir="rtl">
       <div className="max-w-4xl mx-auto">
@@ -215,7 +215,7 @@ export default function Friends() {
           </h1>
           <p className="text-slate-600 text-lg">הזמן חברים ועקוב אחר ההתקדמות המשותפת שלכם.</p>
         </div>
-        
+
         {error && <Alert variant="destructive" className="mb-4"><AlertTitle>שגיאה</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
         {success && <Alert className="mb-4 border-green-500 text-green-700"><AlertTitle>הצלחה</AlertTitle><AlertDescription>{success}</AlertDescription></Alert>}
 
@@ -225,10 +225,10 @@ export default function Friends() {
             <CardDescription>הזן את כתובת המייל של החבר כדי לשלוח בקשת חברות. כרגע לא ניתן לשלוח הזמנה דרך קישור.</CardDescription>
           </CardHeader>
           <CardContent className="flex gap-2">
-            <Input 
-              type="email" 
-              placeholder="friend@example.com" 
-              value={inviteEmail} 
+            <Input
+              type="email"
+              placeholder="friend@example.com"
+              value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
             />
             <Button onClick={handleInvite} disabled={!inviteEmail}><Send className="w-4 h-4 ml-2" /> שלח הזמנה</Button>

@@ -12,7 +12,7 @@ export default function NutritionBreakdown({ nutrients, targetCalories }) {
   const macros = [
     {
       name: 'חלבון',
-      value: nutrients.protein || 0,
+      value: Number(nutrients.protein || 0).toFixed(1),
       target: proteinTarget,
       unit: 'גרם',
       color: 'bg-blue-500',
@@ -23,7 +23,7 @@ export default function NutritionBreakdown({ nutrients, targetCalories }) {
     },
     {
       name: 'פחמימות',
-      value: nutrients.carbs || 0,
+      value: Number(nutrients.carbs || 0).toFixed(1),
       target: carbsTarget,
       unit: 'גרם',
       color: 'bg-green-500',
@@ -34,7 +34,7 @@ export default function NutritionBreakdown({ nutrients, targetCalories }) {
     },
     {
       name: 'שומן',
-      value: nutrients.fat || 0,
+      value: Number(nutrients.fat || 0).toFixed(1),
       target: fatTarget,
       unit: 'גרם',
       color: 'bg-yellow-500',
@@ -58,7 +58,7 @@ export default function NutritionBreakdown({ nutrients, targetCalories }) {
           {macros.map((macro) => {
             const percentage = macro.target > 0 ? (macro.value / macro.target) * 100 : 0;
             const MacroIcon = macro.icon;
-            
+
             return (
               <div key={macro.name} className={`p-4 rounded-xl ${macro.bgColor}`}>
                 <div className="flex items-center justify-between mb-3">
@@ -75,7 +75,7 @@ export default function NutritionBreakdown({ nutrients, targetCalories }) {
                     {Math.round(percentage)}%
                   </Badge>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-600">
@@ -85,8 +85,8 @@ export default function NutritionBreakdown({ nutrients, targetCalories }) {
                       נותרו: {Math.max(0, macro.target - macro.value)} {macro.unit}
                     </span>
                   </div>
-                  <Progress 
-                    value={Math.min(percentage, 100)} 
+                  <Progress
+                    value={Math.min(percentage, 100)}
                     className="h-2 bg-slate-200"
                   />
                 </div>

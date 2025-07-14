@@ -20,13 +20,15 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import DemoModeToggle from "@/components/common/DemoModeToggle";
-import FloatingChatPanel from "@/components/aichat/FloatingChatPanel";
+import FloatingChatPanel from "@/components/nutritionalSummary/FloatingChatPanel";
 import { chatMessageApi } from "@/api/chatMessageApi";
 import { createFoodEntry } from "@/api/foodEntryApi";
 import { InvokeLLM, UploadFile } from "@/api/integrations";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence } from "framer-motion";
+import BottomNav from "@/components/ui/BottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const navigationItems = [
   {
@@ -40,11 +42,6 @@ const navigationItems = [
     icon: Calendar,
   },
   {
-    title: "סיכום תזונתי",
-    url: createPageUrl("AIChat"),
-    icon: BarChart3,
-  },
-  {
     title: "הפרופיל שלי",
     url: createPageUrl("Profile"),
     icon: UserIcon,
@@ -53,11 +50,6 @@ const navigationItems = [
     title: "התקדמות",
     url: createPageUrl("Progress"),
     icon: TrendingUp,
-  },
-  {
-    title: "חברים",
-    url: createPageUrl("Friends"),
-    icon: Users,
   },
 ];
 
@@ -70,22 +62,23 @@ const coachNavItems = [
 ];
 
 const adminNavItems = [
-    {
-        title: "ניהול משתמשים",
-        url: createPageUrl("AdminUsers"),
-        icon: Shield,
-    },
-    {
-        title: "יומן מערכת",
-        url: createPageUrl("AdminLogs"),
-        icon: Shield,
-    }
+  {
+    title: "ניהול משתמשים",
+    url: createPageUrl("AdminUsers"),
+    icon: Shield,
+  },
+  {
+    title: "יומן מערכת",
+    url: createPageUrl("AdminLogs"),
+    icon: Shield,
+  }
 ];
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const { user, isAdmin, isCoach, signOut } = useAuth();
+  const isMobile = useIsMobile();
 
   // Chat State
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -156,42 +149,42 @@ export default function Layout({ children, currentPageName }) {
     setIsLoading(true);
 
     try {
-        const today = format(new Date(), 'yyyy-MM-dd');
-        const userChatMessage = await chatMessageApi.create({
-            message: userMessage,
-            sender: "user",
-            chat_date: today,
-            image_url: imageUrl,
-            created_by: user.email
-        });
-        setMessages(prev => [...prev, userChatMessage]);
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const userChatMessage = await chatMessageApi.create({
+        message: userMessage,
+        sender: "user",
+        chat_date: today,
+        image_url: imageUrl,
+        created_by: user.email
+      });
+      setMessages(prev => [...prev, userChatMessage]);
 
-        // Check if we have a pending chat state
-        const { chatStateApi } = await import('@/api/chatStateApi');
-        const pendingStates = await chatStateApi.filter({
-            user_email: user.email,
-            expires_at: { $gt: new Date().toISOString() }
-        });
+      // Check if we have a pending chat state
+      const { chatStateApi } = await import('@/api/chatStateApi');
+      const pendingStates = await chatStateApi.filter({
+        user_email: user.email,
+        expires_at: { $gt: new Date().toISOString() }
+      });
 
-        if (pendingStates.length > 0 && pendingStates[0].state_type === 'waiting_for_quantity') {
-            const state = pendingStates[0];
-            const quantity = parseFloat(userMessage);
+      if (pendingStates.length > 0 && pendingStates[0].state_type === 'waiting_for_quantity') {
+        const state = pendingStates[0];
+        const quantity = parseFloat(userMessage);
 
-            if (!isNaN(quantity) && quantity > 0) {
-                const foodData = JSON.parse(state.food_data);
+        if (!isNaN(quantity) && quantity > 0) {
+          const foodData = JSON.parse(state.food_data);
 
-                const factor = quantity / 100;
-                const calculatedFood = {
-                    name: foodData.name,
-                    calories: Math.round(foodData.calories * factor),
-                    protein: Math.round((foodData.protein || 0) * factor * 10) / 10,
-                    carbs: Math.round((foodData.carbs || 0) * factor * 10) / 10,
-                    fat: Math.round((foodData.fat || 0) * factor * 10) / 10,
-                    quantity: quantity,
-                    unit: "גרם"
-                };
+          const factor = quantity / 100;
+          const calculatedFood = {
+            name: foodData.name,
+            calories: Math.round(foodData.calories * factor),
+            protein: Math.round((foodData.protein || 0) * factor * 10) / 10,
+            carbs: Math.round((foodData.carbs || 0) * factor * 10) / 10,
+            fat: Math.round((foodData.fat || 0) * factor * 10) / 10,
+            quantity: quantity,
+            unit: "גרם"
+          };
 
-                const aiResponse = `מעולה! חישבתי עבורך ${quantity} גרם של ${foodData.name}:
+          const aiResponse = `מעולה! חישבתי עבורך ${quantity} גרם של ${foodData.name}:
 • ${calculatedFood.calories} קלוריות
 • ${calculatedFood.protein}g חלבון
 • ${calculatedFood.carbs}g פחמימות
@@ -199,73 +192,73 @@ export default function Layout({ children, currentPageName }) {
 
 המזון נוסף לרשימת הארוחות שלך! 🎉`;
 
-                const aiChatMessage = await chatMessageApi.create({
-                    message: aiResponse,
-                    sender: "ai",
-                    chat_date: today,
-                    created_by: user.email,
-                    calories_extracted: calculatedFood.calories,
-                    structured_data: JSON.stringify({
-                        text_response: aiResponse,
-                        summary: {
-                            calories: calculatedFood.calories,
-                            protein: calculatedFood.protein,
-                            carbs: calculatedFood.carbs,
-                            fat: calculatedFood.fat,
-                            meal_type: "snack"
-                        },
-                        foods: [{
-                          name: calculatedFood.name,
-                          calories: calculatedFood.calories,
-                          protein: calculatedFood.protein,
-                          carbs: calculatedFood.carbs,
-                          fat: calculatedFood.fat,
-                          category: "other"
-                        }]
-                    })
-                });
+          const aiChatMessage = await chatMessageApi.create({
+            message: aiResponse,
+            sender: "ai",
+            chat_date: today,
+            created_by: user.email,
+            calories_extracted: calculatedFood.calories,
+            structured_data: JSON.stringify({
+              text_response: aiResponse,
+              summary: {
+                calories: calculatedFood.calories,
+                protein: calculatedFood.protein,
+                carbs: calculatedFood.carbs,
+                fat: calculatedFood.fat,
+                meal_type: "snack"
+              },
+              foods: [{
+                name: calculatedFood.name,
+                calories: calculatedFood.calories,
+                protein: calculatedFood.protein,
+                carbs: calculatedFood.carbs,
+                fat: calculatedFood.fat,
+                category: "other"
+              }]
+            })
+          });
 
-                setMessages(prev => [...prev, aiChatMessage]);
+          setMessages(prev => [...prev, aiChatMessage]);
 
-                await createFoodEntry({
-                    food_name: calculatedFood.name,
-                    calories: Number(calculatedFood.calories) || 0,
-                    protein: Number(calculatedFood.protein) || 0,
-                    carbs: Number(calculatedFood.carbs) || 0,
-                    fat: Number(calculatedFood.fat) || 0,
-                    quantity: Number(calculatedFood.quantity) || 0,
-                    unit: "גרם",
-                    meal_type: "snack",
-                    entry_date: today,
-                    entry_method: "barcode",
-                    created_by: user.email
-                });
+          await createFoodEntry({
+            food_name: calculatedFood.name,
+            calories: Number(calculatedFood.calories) || 0,
+            protein: Number(calculatedFood.protein) || 0,
+            carbs: Number(calculatedFood.carbs) || 0,
+            fat: Number(calculatedFood.fat) || 0,
+            quantity: Number(calculatedFood.quantity) || 0,
+            unit: "גרם",
+            meal_type: "snack",
+            entry_date: today,
+            entry_method: "barcode",
+            created_by: user.email
+          });
 
-                await chatStateApi.delete(state.id);
-                window.dispatchEvent(new CustomEvent('foodEntryAdded'));
+          await chatStateApi.delete(state.id);
+          window.dispatchEvent(new CustomEvent('foodEntryAdded'));
 
-                setIsLoading(false);
-                return;
-            } else {
-                const aiChatMessage = await chatMessageApi.create({
-                    message: "אנא הזן כמות תקינה בגרמים (מספר חיובי)",
-                    sender: "ai",
-                    chat_date: today,
-                    created_by: user.email
-                });
-                setMessages(prev => [...prev, aiChatMessage]);
-                setIsLoading(false);
-                return;
-            }
+          setIsLoading(false);
+          return;
+        } else {
+          const aiChatMessage = await chatMessageApi.create({
+            message: "אנא הזן כמות תקינה בגרמים (מספר חיובי)",
+            sender: "ai",
+            chat_date: today,
+            created_by: user.email
+          });
+          setMessages(prev => [...prev, aiChatMessage]);
+          setIsLoading(false);
+          return;
         }
+      }
 
-        // Regular AI processing
-        let prompt = `אתה אסיסטנט תזונה מומחה מדויק.
+      // Regular AI processing
+      let prompt = `אתה אסיסטנט תזונה מומחה מדויק.
 
 ${imageUrl ?
-`המשתמש שלח תמונה של מזון ${userMessage ? `עם ההודעה: "${userMessage}"` : ''}.`
-:
-`המשתמש כתב: "${userMessage}"`}
+          `המשתמש שלח תמונה של מזון ${userMessage ? `עם ההודעה: "${userMessage}"` : ''}.`
+          :
+          `המשתמש כתב: "${userMessage}"`}
 
 **כללי משקל קריטיים - חובה להשתמש בהם:**
 - **פרוסת לחם אחת = 33 גרם.**
@@ -311,132 +304,132 @@ ${imageUrl ?
   ]
 }`;
 
-        const aiResponseData = await InvokeLLM({
-          prompt,
-          file_urls: imageUrl ? [imageUrl] : undefined,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              text_response: { type: "string" },
-              summary: {
+      const aiResponseData = await InvokeLLM({
+        prompt,
+        file_urls: imageUrl ? [imageUrl] : undefined,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            text_response: { type: "string" },
+            summary: {
+              type: "object",
+              properties: {
+                calories: { type: "number" },
+                protein: { type: "number" },
+                carbs: { type: "number" },
+                fat: { type: "number" },
+                meal_type: { type: "string", enum: ["breakfast", "lunch", "dinner", "snack"] }
+              },
+              required: ["calories", "protein", "carbs", "fat", "meal_type"]
+            },
+            foods: {
+              type: "array",
+              items: {
                 type: "object",
                 properties: {
+                  name: { type: "string" },
                   calories: { type: "number" },
                   protein: { type: "number" },
                   carbs: { type: "number" },
                   fat: { type: "number" },
-                  meal_type: { type: "string", enum: ["breakfast", "lunch", "dinner", "snack"] }
+                  category: { type: "string" }
                 },
-                required: ["calories", "protein", "carbs", "fat", "meal_type"]
-              },
-              foods: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: { type: "string" },
-                    calories: { type: "number" },
-                    protein: { type: "number" },
-                    carbs: { type: "number" },
-                    fat: { type: "number" },
-                    category: { type: "string" }
-                  },
-                  required: ["name", "calories", "protein", "carbs", "fat", "category"]
-                }
+                required: ["name", "calories", "protein", "carbs", "fat", "category"]
               }
-            },
-            required: ["text_response", "summary", "foods"]
-          }
-        });
-
-        // Client-side calculation fix
-        const individualFoods = (aiResponseData.foods || []).filter(food => food.category !== "summary");
-        const calculatedTotals = individualFoods.reduce((totals, food) => {
-            totals.calories += Number(food.calories || 0);
-            totals.protein += Number(food.protein || 0);
-            totals.carbs += Number(food.carbs || 0);
-            totals.fat += Number(food.fat || 0);
-            return totals;
-        }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
-
-        calculatedTotals.protein = Math.round(calculatedTotals.protein * 10) / 10;
-        calculatedTotals.carbs = Math.round(calculatedTotals.carbs * 10) / 10;
-        calculatedTotals.fat = Math.round(calculatedTotals.fat * 10) / 10;
-        calculatedTotals.calories = Math.round(calculatedTotals.calories);
-
-        let summaryIndex = (aiResponseData.foods || []).findIndex(food => food.category === "summary");
-        const summaryFoodObject = { name: "סיכום כולל", category: "summary", ...calculatedTotals };
-
-        if (summaryIndex !== -1) {
-          aiResponseData.foods[summaryIndex] = summaryFoodObject;
-        } else if (individualFoods.length > 0) {
-          aiResponseData.foods.push(summaryFoodObject);
+            }
+          },
+          required: ["text_response", "summary", "foods"]
         }
+      });
 
-        const summary = {
-          ...(aiResponseData.summary || {}),
-          ...calculatedTotals,
-          meal_type: aiResponseData.summary?.meal_type || "snack"
-        };
+      // Client-side calculation fix
+      const individualFoods = (aiResponseData.foods || []).filter(food => food.category !== "summary");
+      const calculatedTotals = individualFoods.reduce((totals, food) => {
+        totals.calories += Number(food.calories || 0);
+        totals.protein += Number(food.protein || 0);
+        totals.carbs += Number(food.carbs || 0);
+        totals.fat += Number(food.fat || 0);
+        return totals;
+      }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
-        if (!aiResponseData || !summary || !aiResponseData.foods) {
-          throw new Error("תגובת AI לא תקינה");
-        }
+      calculatedTotals.protein = Math.round(calculatedTotals.protein * 10) / 10;
+      calculatedTotals.carbs = Math.round(calculatedTotals.carbs * 10) / 10;
+      calculatedTotals.fat = Math.round(calculatedTotals.fat * 10) / 10;
+      calculatedTotals.calories = Math.round(calculatedTotals.calories);
 
-        const foods = (aiResponseData.foods || []).map(food => ({
-          name: food.name || "מזון לא זוהה",
-          calories: food.calories || 0,
-          protein: food.protein || 0,
-          carbs: food.carbs || 0,
-          fat: food.fat || 0,
-          category: food.category || "other"
-        }));
+      let summaryIndex = (aiResponseData.foods || []).findIndex(food => food.category === "summary");
+      const summaryFoodObject = { name: "סיכום כולל", category: "summary", ...calculatedTotals };
 
-        const validatedResponse = {
-          text_response: aiResponseData.text_response || "זיהיתי את המזון שלך",
-          summary,
-          foods
-        };
+      if (summaryIndex !== -1) {
+        aiResponseData.foods[summaryIndex] = summaryFoodObject;
+      } else if (individualFoods.length > 0) {
+        aiResponseData.foods.push(summaryFoodObject);
+      }
 
-        const aiChatMessage = await chatMessageApi.create({
-          message: validatedResponse.text_response,
-          sender: "ai",
-          chat_date: today,
-          created_by: user.email,
-          calories_extracted: summary.calories,
-          structured_data: JSON.stringify(validatedResponse)
-        });
-        setMessages(prev => [...prev, aiChatMessage]);
+      const summary = {
+        ...(aiResponseData.summary || {}),
+        ...calculatedTotals,
+        meal_type: aiResponseData.summary?.meal_type || "snack"
+      };
 
-        if (summary.calories > 0 || individualFoods.length > 0) {
-          await createFoodEntry({
-            food_name: individualFoods.map(f => f.name).join(', ') || "מזון מהצ'אט",
-            calories: Number(summary.calories) || 0,
-            protein: Number(summary.protein) || 0,
-            carbs: Number(summary.carbs) || 0,
-            fat: Number(summary.fat) || 0,
-            quantity: 1,
-            unit: "ארוחה",
-            meal_type: summary.meal_type,
-            entry_date: today,
-            entry_method: "ai_chat",
-            created_by: user.email
-          });
-          window.dispatchEvent(new CustomEvent('foodEntryAdded'));
-        }
+      if (!aiResponseData || !summary || !aiResponseData.foods) {
+        throw new Error("תגובת AI לא תקינה");
+      }
 
-      } catch (error) {
-        console.error("Error sending message:", error);
-        const errorMessage = await chatMessageApi.create({
-          message: "מצטער, אירעה שגיאה בעיבוד הבקשה. אנא נסה שוב.",
-          sender: "ai",
-          chat_date: format(new Date(), 'yyyy-MM-dd'),
+      const foods = (aiResponseData.foods || []).map(food => ({
+        name: food.name || "מזון לא זוהה",
+        calories: food.calories || 0,
+        protein: food.protein || 0,
+        carbs: food.carbs || 0,
+        fat: food.fat || 0,
+        category: food.category || "other"
+      }));
+
+      const validatedResponse = {
+        text_response: aiResponseData.text_response || "זיהיתי את המזון שלך",
+        summary,
+        foods
+      };
+
+      const aiChatMessage = await chatMessageApi.create({
+        message: validatedResponse.text_response,
+        sender: "ai",
+        chat_date: today,
+        created_by: user.email,
+        calories_extracted: summary.calories,
+        structured_data: JSON.stringify(validatedResponse)
+      });
+      setMessages(prev => [...prev, aiChatMessage]);
+
+      if (summary.calories > 0 || individualFoods.length > 0) {
+        await createFoodEntry({
+          food_name: individualFoods.map(f => f.name).join(', ') || "מזון מהצ'אט",
+          calories: Number(summary.calories) || 0,
+          protein: Number(summary.protein) || 0,
+          carbs: Number(summary.carbs) || 0,
+          fat: Number(summary.fat) || 0,
+          quantity: 1,
+          unit: "ארוחה",
+          meal_type: summary.meal_type,
+          entry_date: today,
+          entry_method: "ai_chat",
           created_by: user.email
         });
-        setMessages(prev => [...prev, errorMessage]);
-      } finally {
-        setIsLoading(false);
+        window.dispatchEvent(new CustomEvent('foodEntryAdded'));
       }
+
+    } catch (error) {
+      console.error("Error sending message:", error);
+      const errorMessage = await chatMessageApi.create({
+        message: "מצטער, אירעה שגיאה בעיבוד הבקשה. אנא נסה שוב.",
+        sender: "ai",
+        chat_date: format(new Date(), 'yyyy-MM-dd'),
+        created_by: user.email
+      });
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -449,151 +442,159 @@ ${imageUrl ?
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 to-blue-50" dir="rtl">
-        <style>
-          {`
+      <style>
+        {`
             .glass-effect {
               background: rgba(255, 255, 255, 0.6);
               backdrop-filter: blur(10px);
               border: 1px solid rgba(255, 255, 255, 0.2);
             }
           `}
-        </style>
+      </style>
 
-        <div className="flex h-full">
-            {/* Sidebar */}
-            <div className={`
-              fixed inset-y-0 right-0 z-50 w-72 bg-white/95 backdrop-blur-sm border-l border-slate-200 shadow-xl
-              transform transition-transform duration-300 ease-in-out
-              md:relative md:translate-x-0 md:flex-shrink-0
-              ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}
-            `}>
-              <div className="flex flex-col h-full">
-                <div className="flex items-center justify-between p-6">
-                  <Link to={createPageUrl("Dashboard")} className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-green-500 rounded-2xl flex items-center justify-center">
-                      <Apple className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                      NutriTrack
-                    </span>
+      <div className="flex h-full">
+        {/* Sidebar: only show on desktop */}
+        {!isMobile && (
+          <div className={
+            `fixed inset-y-0 right-0 z-50 w-72 bg-white/95 backdrop-blur-sm border-l border-slate-200 shadow-xl
+            transform transition-transform duration-300 ease-in-out
+            md:relative md:translate-x-0 md:flex-shrink-0
+            ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`
+          }>
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between p-6">
+                <Link to={createPageUrl("Dashboard")}
+                  className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-green-500 rounded-2xl flex items-center justify-center">
+                    <Apple className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                    NutriTrack
+                  </span>
+                </Link>
+                <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="md:hidden">
+                  <X className="w-6 h-6" />
+                </Button>
+              </div>
+
+              <nav className="flex-1 px-4 py-2 space-y-2">
+                {navigationItems.map((item) => (
+                  <Link
+                    key={item.title}
+                    to={item.url}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${location.pathname === item.url
+                      ? 'bg-blue-100 text-blue-700 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span>{item.title}</span>
                   </Link>
-                  <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="md:hidden">
-                    <X className="w-6 h-6" />
-                  </Button>
-                </div>
-
-                <nav className="flex-1 px-4 py-2 space-y-2">
-                  {navigationItems.map((item) => (
-                    <Link
-                      key={item.title}
-                      to={item.url}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${
-                        location.pathname === item.url
-                          ? 'bg-blue-100 text-blue-700 font-semibold'
-                          : 'text-slate-600 hover:bg-slate-100'
+                ))}
+                {isCoach && coachNavItems.map((item) => (
+                  <Link
+                    key={item.title}
+                    to={item.url}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${location.pathname === item.url
+                      ? 'bg-purple-100 text-purple-700 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-100'
                       }`}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.title}</span>
-                    </Link>
-                  ))}
-                  {isCoach && coachNavItems.map((item) => (
-                     <Link
-                        key={item.title}
-                        to={item.url}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${
-                            location.pathname === item.url
-                            ? 'bg-purple-100 text-purple-700 font-semibold'
-                            : 'text-slate-600 hover:bg-slate-100'
-                        }`}
-                        >
-                        <item.icon className="w-5 h-5" />
-                        <span>{item.title}</span>
-                    </Link>
-                  ))}
-                  {isAdmin && adminNavItems.map((item) => (
-                    <Link
-                      key={item.title}
-                      to={item.url}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${
-                        location.pathname === item.url
-                          ? 'bg-red-100 text-red-700 font-semibold'
-                          : 'text-slate-600 hover:bg-slate-100'
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span>{item.title}</span>
+                  </Link>
+                ))}
+                {isAdmin && adminNavItems.map((item) => (
+                  <Link
+                    key={item.title}
+                    to={item.url}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 ${location.pathname === item.url
+                      ? 'bg-red-100 text-red-700 font-semibold'
+                      : 'text-slate-600 hover:bg-slate-100'
                       }`}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.title}</span>
-                    </Link>
-                  ))}
-                </nav>
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span>{item.title}</span>
+                  </Link>
+                ))}
+              </nav>
 
-                <div className="p-4 mt-auto space-y-4">
-                  {/* Demo Mode Toggle */}
-                  <DemoModeToggle />
-                  
-                  <Button onClick={handleLogout} variant="ghost" className="w-full justify-start text-slate-600 hover:bg-slate-100">
-                    <LogOut className="w-5 h-5 ml-3" />
-                    <span>התנתקות</span>
-                  </Button>
-                </div>
+              <div className="p-4 mt-auto space-y-4">
+                {/* Demo Mode Toggle */}
+                <DemoModeToggle />
+
+                <Button onClick={handleLogout} variant="ghost" className="w-full justify-start text-slate-600 hover:bg-slate-100">
+                  <LogOut className="w-5 h-5 ml-3" />
+                  <span>התנתקות</span>
+                </Button>
               </div>
             </div>
-
-            {/* Main content area */}
-            <div className="flex flex-col flex-1 w-full md:w-auto overflow-hidden">
-                {/* Mobile Header */}
-                <header className="md:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-sm border-b">
-                  <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
-                    <Menu className="w-6 h-6" />
-                  </Button>
-                  <Link to={createPageUrl("Dashboard")} className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-                      <Apple className="w-5 h-5 text-white" />
-                    </div>
-                  </Link>
-                </header>
-
-                <main className="flex-1 overflow-y-auto">
-                    {children}
-                </main>
-            </div>
-        </div>
-
-        {/* Floating Chat Button and Panel */}
-        {user && (
-          <>
-            <div className="fixed bottom-4 left-4 z-40">
-              <button
-                className="w-16 h-16 bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110 flex items-center justify-center"
-                onClick={() => setIsChatOpen(true)}
-                title="פתח צ'אט AI"
-              >
-                <Bot className="w-8 h-8 text-white stroke-2" />
-              </button>
-            </div>
-
-            <AnimatePresence>
-                {isChatOpen && (
-                    <FloatingChatPanel
-                        onClose={() => setIsChatOpen(false)}
-                        messages={messages}
-                        newMessage={newMessage}
-                        setNewMessage={setNewMessage}
-                        isLoading={isLoading}
-                        uploadedImage={uploadedImage}
-                        setUploadedImage={setUploadedImage}
-                        handleSendMessage={handleSendMessage}
-                        handleFileUpload={handleFileUpload}
-                        filteredFoods={getFilteredFoods}
-                    />
-                )}
-            </AnimatePresence>
-          </>
+          </div>
         )}
+        {/* Main content area */}
+        <div className="flex flex-col flex-1 w-full md:w-auto overflow-hidden">
+          {/* Mobile Header: logo centered, no menu button */}
+          {isMobile && (
+            <>
+              <header className="flex items-center justify-center p-4 bg-white/80 backdrop-blur-sm">
+                <Link to={createPageUrl("Dashboard")} className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
+                    <Apple className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                    NutriTrack
+                  </span>
+                </Link>
+              </header>
+              <div className="border-b border-gray-200 dark:border-gray-700 w-full" />
+            </>
+          )}
+          {/* Desktop Header: unchanged, if any */}
+
+          <main className="flex-1 overflow-y-auto pb-16">{/* Add bottom padding for BottomNav */}
+            {children}
+          </main>
+          <BottomNav />
+        </div>
       </div>
+
+      {/* Floating Chat Button and Panel */}
+      {user && (
+        <>
+          <div className="fixed left-4 z-50 bottom-24 md:bottom-4">
+            <button
+              className="w-16 h-16 bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110 flex items-center justify-center"
+              onClick={() => setIsChatOpen(true)}
+              title="פתח צ'אט AI"
+            >
+              <Bot className="w-8 h-8 text-white stroke-2" />
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {isChatOpen && (
+              <div className="fixed inset-0 z-[60] flex items-end justify-center md:items-center md:justify-center">
+                <FloatingChatPanel
+                  onClose={() => setIsChatOpen(false)}
+                  messages={messages}
+                  newMessage={newMessage}
+                  setNewMessage={setNewMessage}
+                  isLoading={isLoading}
+                  uploadedImage={uploadedImage}
+                  setUploadedImage={setUploadedImage}
+                  handleSendMessage={handleSendMessage}
+                  handleFileUpload={handleFileUpload}
+                  filteredFoods={getFilteredFoods}
+                />
+              </div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
+    </div>
   );
 }
 

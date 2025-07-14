@@ -6,7 +6,7 @@ import { getFoodEntriesByUserAndDate, createFoodEntry, updateFoodEntry, deleteFo
 import { weightEntryApi } from "@/api/weightEntryApi";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { format } from "date-fns";
+import { format, addDays, subDays, isToday } from "date-fns";
 import { he } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,9 @@ import {
   Wrench,
   X,
   UserPlus, // Added for coach requests
-  Check     // Added for coach requests
+  Check,     // Added for coach requests
+  ChevronLeft, // Added for date navigation
+  ChevronRight // Added for date navigation
 } from "lucide-react";
 import EditFoodWithAI from "../components/dashboard/EditFoodWithAI";
 import BarcodeScanner from "../components/dashboard/BarcodeScanner";
@@ -29,6 +31,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { coachRequestApi } from "@/api/coachRequestApi"; // Added for coach requests
 import { getPlannedCaloriesForDate } from "@/components/utils/weeklyPlanUtils"; // Import the utility
 import { useAuth } from "@/contexts/AuthContext";
+import SummaryGraph from "@/components/nutritionalSummary/SummaryGraph";
+import NutritionCard from "@/components/nutritionalSummary/NutritionCard";
+import TodaysMeals from "@/components/dashboard/TodaysMeals";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -49,38 +54,40 @@ export default function Dashboard() {
   const [coachRequests, setCoachRequests] = useState([]); // Added state for coach requests
   const [error, setError] = useState(null); // Added error state
 
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [dailyFoods, setDailyFoods] = useState([]);
+
+  // LOG STATE ON EVERY RENDER
+  console.log('Dashboard RENDER: selectedDate:', selectedDate);
+  console.log('Dashboard RENDER: todaysEntries:', todaysEntries);
+  console.log('Dashboard RENDER: dailyFoods:', dailyFoods);
+
   // Ref to track if data has been loaded to prevent infinite loops
   const dataLoadedRef = useRef(false);
   const lastAuthStateRef = useRef(null);
+  // Ref to track the latest data request
+  const latestRequestRef = useRef(0);
 
   useEffect(() => {
     // Create a unique auth state identifier
     const currentAuthState = `${authLoading}-${isAuthenticated}-${userRole}`;
 
-    // Skip if auth state hasn't changed
-    if (lastAuthStateRef.current === currentAuthState) {
-      return;
-    }
-    lastAuthStateRef.current = currentAuthState;
-
     console.log('Dashboard - Auth state changed:', { authLoading, isAuthenticated, userRole });
+    console.log('Dashboard - selectedDate:', selectedDate);
 
-    // Only load data when auth is not loading and user is authenticated and has role
-    if (!authLoading && isAuthenticated && userRole && !dataLoadedRef.current) {
-      console.log('Dashboard - Loading data for authenticated user');
+    // Always load data when not loading, authenticated, and userRole is set
+    if (!authLoading && isAuthenticated && userRole) {
+      console.log('Dashboard - Loading data for authenticated user or date change');
       logEvent('Dashboard', 'PAGE_LOAD');
-      dataLoadedRef.current = true;
       loadData();
     } else if (authLoading) {
       // Reset loading state when auth is loading
       console.log('Dashboard - Auth loading, resetting loading state');
       setIsLoading(false);
-      dataLoadedRef.current = false;
     } else if (!isAuthenticated) {
       // Reset when user is not authenticated
       console.log('Dashboard - User not authenticated, resetting state');
       setIsLoading(false);
-      dataLoadedRef.current = false;
       // Clear user data when not authenticated
       setUser(null);
       setUserProfile(null);
@@ -101,7 +108,7 @@ export default function Dashboard() {
     return () => {
       window.removeEventListener('foodEntryAdded', handleDataRefresh);
     };
-  }, [authLoading, isAuthenticated, userRole]); // Depend on auth state and user role
+  }, [authLoading, isAuthenticated, userRole, selectedDate]); // Depend on auth state and user role
 
   // Cleanup effect to reset loading state when component unmounts
   useEffect(() => {
@@ -114,13 +121,9 @@ export default function Dashboard() {
   }, []);
 
   const loadData = async () => {
-    console.log('Dashboard - Starting loadData');
-
-    // Prevent multiple simultaneous calls
-    if (isLoading) {
-      console.log('Dashboard - Already loading, skipping');
-      return;
-    }
+    // Increment the request token
+    const requestId = ++latestRequestRef.current;
+    console.log('Dashboard - Starting loadData for date:', selectedDate);
 
     // Don't load data if user is not authenticated
     if (!isAuthenticated) {
@@ -169,8 +172,9 @@ export default function Dashboard() {
       setUserProfile(profile);
 
       // Fetch all data in parallel with timeouts
-      const today = format(new Date(), 'yyyy-MM-dd');
+      const today = format(selectedDate, 'yyyy-MM-dd');
       console.log('Dashboard - Fetching all data in parallel for:', today);
+      console.log('Dashboard - About to call getFoodEntriesByUserAndDate with:', currentUser.email, today);
 
       // Show loading progress
       setError(null);
@@ -187,11 +191,21 @@ export default function Dashboard() {
 
       // Fetch all data in parallel
       const [plannedCalories, requests, foodEntries, weightEntries] = await Promise.allSettled([
-        createTimeoutPromise(getPlannedCaloriesForDate(currentUser.email, new Date())),
+        createTimeoutPromise(getPlannedCaloriesForDate(currentUser.email, selectedDate)),
         createTimeoutPromise(coachRequestApi.filter({ trainee_email: currentUser.email })),
-        createTimeoutPromise(getFoodEntriesByUserAndDate(currentUser.email, today)),
+        createTimeoutPromise((async () => {
+          const result = await getFoodEntriesByUserAndDate(currentUser.email, today);
+          console.log('Dashboard - getFoodEntriesByUserAndDate result for', today, ':', result);
+          return result;
+        })()),
         createTimeoutPromise(weightEntryApi.filter({ created_by: currentUser.email, entry_date: today }))
       ]);
+
+      // Only update state if this is the latest request
+      if (requestId !== latestRequestRef.current) {
+        console.log('Dashboard - Ignoring outdated loadData result for requestId', requestId);
+        return;
+      }
 
       // Handle results
       const todayPlannedCalories = plannedCalories.status === 'fulfilled' ? plannedCalories.value : 0;
@@ -209,9 +223,13 @@ export default function Dashboard() {
       setPlannedCalories(todayPlannedCalories);
       setCoachRequests(coachRequests);
       setTodaysEntries(todaysFoodEntries);
+      setDailyFoods(todaysFoodEntries); // Set dailyFoods for the graph
       setWeightUpdatedToday(todaysWeightEntries.length > 0);
 
-      console.log('Dashboard - All data loaded successfully');
+      console.log('Dashboard - All data loaded successfully for date:', selectedDate);
+      console.log('Dashboard - todaysEntries:', todaysFoodEntries);
+      console.log('Dashboard - dailyFoods:', todaysFoodEntries);
+      console.log('Dashboard - plannedCalories:', todayPlannedCalories);
 
     } catch (error) {
       console.error("Dashboard - Error loading data:", error);
@@ -223,10 +241,14 @@ export default function Dashboard() {
       setPlannedCalories(0);
       setCoachRequests([]);
       setTodaysEntries([]);
+      setDailyFoods([]); // Clear dailyFoods on error
       setWeightUpdatedToday(false);
     } finally {
-      console.log('Dashboard - Setting loading to false');
-      setIsLoading(false);
+      // Only clear loading if this is the latest request
+      if (requestId === latestRequestRef.current) {
+        console.log('Dashboard - Setting loading to false');
+        setIsLoading(false);
+      }
     }
   };
 
@@ -274,6 +296,7 @@ export default function Dashboard() {
         logEvent('Dashboard', 'CONFIRM_DELETE_FOOD_ENTRY', { entryId });
         // Update state directly for smooth removal instead of full reload
         setTodaysEntries(prevEntries => prevEntries.filter(entry => entry.id !== entryId));
+        setDailyFoods(prevFoods => prevFoods.filter(food => food.id !== entryId)); // Update dailyFoods
       } catch (error) {
         logEvent('Dashboard', 'ERROR_DELETING_ENTRY', { entryId, error: error.message }, 'ERROR');
         console.error("Error deleting entry:", error);
@@ -394,8 +417,27 @@ export default function Dashboard() {
     }
   };
 
-  // Show loading spinner while auth is loading or dashboard is loading
-  if (authLoading || isLoading) {
+  const handlePreviousDay = () => {
+    console.log('Dashboard - handlePreviousDay clicked. Current selectedDate:', selectedDate);
+    setSelectedDate(prevDate => {
+      const newDate = subDays(prevDate, 1);
+      console.log('Dashboard - handlePreviousDay new selectedDate:', newDate);
+      return newDate;
+    });
+  };
+  const handleNextDay = () => {
+    if (!isToday(selectedDate)) {
+      console.log('Dashboard - handleNextDay clicked. Current selectedDate:', selectedDate);
+      setSelectedDate(prevDate => {
+        const newDate = addDays(prevDate, 1);
+        console.log('Dashboard - handleNextDay new selectedDate:', newDate);
+        return newDate;
+      });
+    }
+  };
+
+  // Show loading spinner only while auth is loading or user is not authenticated
+  if (authLoading || !isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
@@ -420,7 +462,7 @@ export default function Dashboard() {
                 שלום, {userProfile?.display_name || user?.full_name || "משתמש"}! 👋
               </h1>
               <p className="text-slate-600 text-lg">
-                {format(new Date(), 'EEEE, d MMMM yyyy', { locale: he })}
+                {isToday(selectedDate) ? "היום" : format(selectedDate, 'EEEE, d MMMM yyyy', { locale: he })}
               </p>
               {userProfile && (
                 <Badge variant="outline" className="mt-2 bg-blue-50 text-blue-700 border-blue-200">
@@ -500,110 +542,47 @@ export default function Dashboard() {
         ))}
 
         {/* Basic Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-8">
-          <Card className="glass-effect shadow-lg">
-            <CardHeader>
-              <CardTitle>קלוריות היום</CardTitle>
+        <div className="grid grid-cols-2 gap-4 mb-8 mt-8 place-items-center">
+          <Card className="glass-effect shadow-lg aspect-square flex flex-col items-center justify-center max-w-[140px] min-h-[120px] w-full p-1">
+            <CardHeader className="p-1 pb-0">
+              <CardTitle className="text-xs">משקל נוכחי</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">
-                {totalCalories}
-              </div>
-              <p className="text-slate-600">
-                מתוך {plannedCalories || userProfile?.daily_calories || 0}
-              </p>
-              {plannedCalories !== userProfile?.daily_calories && plannedCalories > 0 && (
-                <Badge variant="outline" className="mt-2 bg-purple-50 text-purple-700 border-purple-200">
-                  יעד מותאם לשבוע
-                </Badge>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="glass-effect shadow-lg">
-            <CardHeader>
-              <CardTitle>משקל נוכחי</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">
+            <CardContent className="flex flex-col items-center justify-center flex-1 p-1">
+              <div className="text-lg font-bold text-green-600">
                 {userProfile?.weight || 0}
               </div>
-              <p className="text-slate-600">קילוגרם</p>
+              <p className="text-slate-600 text-xs">קילוגרם</p>
             </CardContent>
           </Card>
 
-          <Card className="glass-effect shadow-lg">
-            <CardHeader>
-              <CardTitle>ארוחות היום</CardTitle>
+          <Card className="glass-effect shadow-lg aspect-square flex flex-col items-center justify-center max-w-[140px] min-h-[120px] w-full p-1">
+            <CardHeader className="p-1 pb-0">
+              <CardTitle className="text-xs">ארוחות היום</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-purple-600">
+            <CardContent className="flex flex-col items-center justify-center flex-1 p-1">
+              <div className="text-lg font-bold text-purple-600">
                 {todaysEntries.length}
               </div>
-              <p className="text-slate-600">פריטים</p>
+              <p className="text-slate-600 text-xs">פריטים</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Today's Entries */}
-        <Card className="glass-effect shadow-lg">
-          <CardHeader>
-            <CardTitle>הארוחות של היום</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {todaysEntries.length === 0 ? (
-              <p className="text-center text-slate-500 py-8">
-                עדיין לא רשמת ארוחות היום
-              </p>
-            ) : (
-              <div className="space-y-3">
-                <AnimatePresence>
-                  {todaysEntries.map((entry) => (
-                    <motion.div
-                      key={entry.id}
-                      layout
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -50, transition: { duration: 0.2 } }}
-                      className="flex justify-between items-center p-3 bg-slate-50 rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium">{entry.food_name}</p>
-                        <p className="text-sm text-slate-600">{entry.meal_type}</p>
-                        {entry.quantity && entry.unit && (
-                          <p className="text-xs text-slate-500">
-                            {entry.quantity} {entry.unit}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right mr-4">
-                        <p className="font-bold">{entry.calories} קלוריות</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditWithAI(entry)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          ערוך
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteEntry(entry.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          מחק
-                        </Button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Date Navigation - moved below the cards */}
+        <div className="flex items-center justify-center gap-4 mb-8">
+          <Button variant="outline" size="icon" onClick={handlePreviousDay}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+          <h2 className="text-xl font-semibold text-slate-800 w-64 text-center">
+            {isToday(selectedDate) ? "היום" : format(selectedDate, 'EEEE, d MMMM', { locale: he })}
+          </h2>
+          <Button variant="outline" size="icon" onClick={handleNextDay} disabled={isToday(selectedDate)}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Summary graph directly under date navigation */}
+        <SummaryGraph foods={dailyFoods} dailyCalorieTarget={plannedCalories || userProfile?.daily_calories || 2000} isLoading={isLoading} />
 
         {/* Weight Modal */}
         {showWeightModal && (
@@ -649,6 +628,9 @@ export default function Dashboard() {
             onSave={handleEditSave}
           />
         )}
+
+        {/* Today's Entries */}
+        <TodaysMeals entries={todaysEntries} onDelete={handleDeleteEntry} onEditWithAI={handleEditWithAI} isLoading={isLoading} />
       </div>
     </div>
   );
