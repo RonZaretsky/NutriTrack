@@ -33,6 +33,7 @@ import { getPlannedCaloriesForDate } from "@/components/utils/weeklyPlanUtils"; 
 import { useAuth } from "@/contexts/AuthContext";
 import SummaryGraph from "@/components/nutritionalSummary/SummaryGraph";
 import NutritionCard from "@/components/nutritionalSummary/NutritionCard";
+import TodaysMeals from "@/components/dashboard/TodaysMeals";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -606,64 +607,7 @@ export default function Dashboard() {
         )}
 
         {/* Today's Entries */}
-        <Card className="glass-effect shadow-lg">
-          <CardHeader>
-            <CardTitle>הארוחות של היום</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {todaysEntries.length === 0 ? (
-              <p className="text-center text-slate-500 py-8">
-                עדיין לא רשמת ארוחות היום
-              </p>
-            ) : (
-              <div className="space-y-3">
-                <AnimatePresence>
-                  {todaysEntries.map((entry) => (
-                    <motion.div
-                      key={entry.id}
-                      layout
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -50, transition: { duration: 0.2 } }}
-                      className="flex justify-between items-center p-3 bg-slate-50 rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium">{entry.food_name}</p>
-                        <p className="text-sm text-slate-600">{entry.meal_type}</p>
-                        {entry.quantity && entry.unit && (
-                          <p className="text-xs text-slate-500">
-                            {entry.quantity} {entry.unit}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right mr-4">
-                        <p className="font-bold">{entry.calories} קלוריות</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditWithAI(entry)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          ערוך
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteEntry(entry.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          מחק
-                        </Button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <TodaysMeals entries={todaysEntries} onDelete={handleDeleteEntry} onEditWithAI={handleEditWithAI} />
       </div>
     </div>
   );

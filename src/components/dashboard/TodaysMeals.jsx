@@ -1,123 +1,59 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Utensils, Coffee, Sun, Moon, Clock, MoreVertical, Trash2, Edit, Bot } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
-const mealIcons = {
-  breakfast: Coffee,
-  lunch: Sun,
-  dinner: Moon,
-  snack: Clock
-};
-
-const mealNames = {
-  breakfast: 'ארוחת בוקר',
-  lunch: 'ארוחת צהריים',
-  dinner: 'ארוחת ערב',
-  snack: 'חטיפים'
-};
-
-const mealColors = {
-  breakfast: 'bg-orange-100 text-orange-800',
-  lunch: 'bg-yellow-100 text-yellow-800',
-  dinner: 'bg-purple-100 text-purple-800',
-  snack: 'bg-green-100 text-green-800'
-};
-
-export default function TodaysMeals({ entries, onDelete, onEditQuantity, onEditWithAI }) {
-  const groupedEntries = entries.reduce((acc, entry) => {
-    const mealType = entry.meal_type;
-    if (!acc[mealType]) acc[mealType] = [];
-    acc[mealType].push(entry);
-    return acc;
-  }, {});
-
+export default function TodaysMeals({ entries, onDelete, onEditWithAI }) {
   return (
-    <Card className="glass-effect shadow-lg smooth-transition hover:shadow-xl">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Utensils className="w-5 h-5 text-blue-500" />
-          הארוחות של היום
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {entries.length === 0 ? (
-          <div className="text-center py-8">
-            <Utensils className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-            <p className="text-slate-500">עדיין לא רשמת ארוחות היום</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {Object.entries(groupedEntries).map(([mealType, mealEntries]) => {
-              const MealIcon = mealIcons[mealType];
-              const totalCalories = mealEntries.reduce((sum, entry) => sum + (entry.calories || 0), 0);
-              
-              return (
-                <div key={mealType} className="border-r-4 border-blue-200 pr-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <MealIcon className="w-4 h-4 text-slate-600" />
-                      <h3 className="font-semibold text-slate-900">{mealNames[mealType]}</h3>
-                    </div>
-                    <Badge className={mealColors[mealType]}>
-                      {totalCalories} קלוריות
-                    </Badge>
+    <div className="flex flex-wrap justify-center gap-6">
+      {entries.length === 0 ? (
+        <div className="text-center py-8 w-full">
+          <p className="text-slate-500">עדיין לא רשמת ארוחות היום</p>
+        </div>
+      ) : (
+        entries.map((entry) => (
+          <Card key={entry.id} className="w-full max-w-xs bg-white rounded-2xl shadow p-0 flex-shrink-0 h-[370px] flex flex-col">
+            <CardContent className="p-6 flex flex-col h-full">
+              {/* Title and Time (fixed at top, ~20% height) */}
+              <div className="mb-2" style={{ minHeight: '20%', flex: '0 0 20%' }}>
+                <h2 className="text-2xl font-bold leading-tight mb-1">{entry.food_name}</h2>
+                <p className="text-gray-400 text-base mb-2">{entry.time || ''}</p>
+              </div>
+
+              {/* Centered Calories and Macros */}
+              <div className="flex-1 flex flex-col justify-center">
+                <div className="flex flex-col items-center mb-2">
+                  <span className="text-4xl font-extrabold text-black leading-none">{entry.calories}</span>
+                  <span className="text-lg text-gray-500 mb-1">קלוריות</span>
+                </div>
+                <div className="flex justify-between text-center mb-2">
+                  <div>
+                    <span className="block text-purple-700 font-medium text-base">חלבון</span>
+                    <span className="block text-black font-bold text-lg">{entry.protein} גרם</span>
                   </div>
-                  
-                  <div className="space-y-2">
-                    {mealEntries.map((entry) => (
-                      <div key={entry.id} className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg">
-                        <div className="flex-1">
-                          <p className="font-medium text-slate-900">{entry.food_name}</p>
-                          {entry.quantity && entry.unit && (
-                            <p className="text-sm text-slate-500">
-                              {entry.quantity} {entry.unit}
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-left ml-4">
-                          <p className="font-semibold text-slate-900">{entry.calories}</p>
-                          <p className="text-xs text-slate-500">קלוריות</p>
-                        </div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <MoreVertical className="w-4 h-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                {entry.entry_method === 'barcode' && (
-                                    <DropdownMenuItem onClick={() => onEditQuantity(entry)}>
-                                        <Edit className="w-4 h-4 ml-2" />
-                                        <span>ערוך כמות</span>
-                                    </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem onClick={() => onEditWithAI(entry)}>
-                                    <Bot className="w-4 h-4 ml-2" />
-                                    <span>ערוך עם AI</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onDelete(entry.id)} className="text-red-600">
-                                    <Trash2 className="w-4 h-4 ml-2" />
-                                    <span>מחק</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    ))}
+                  <div>
+                    <span className="block text-blue-600 font-medium text-base">פחמימות</span>
+                    <span className="block text-black font-bold text-lg">{entry.carbs} גרם</span>
+                  </div>
+                  <div>
+                    <span className="block text-yellow-700 font-medium text-base">שומן</span>
+                    <span className="block text-black font-bold text-lg">{entry.fat} גרם</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              </div>
+
+              {/* Action Buttons (fixed at bottom) */}
+              <div className="flex gap-3 mt-2 pt-2 w-full justify-between">
+                <Button variant="default" className="flex-1" onClick={() => onEditWithAI(entry)}>
+                  ערוך
+                </Button>
+                <Button variant="destructive" className="flex-1" onClick={() => onDelete(entry.id)}>
+                  מחק
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </div>
   );
 }
