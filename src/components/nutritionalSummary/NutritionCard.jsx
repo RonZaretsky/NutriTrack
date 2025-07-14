@@ -17,7 +17,7 @@ export default function NutritionCard({ food }) {
   const { name, calories, protein, carbs, fat, category } = food;
   const info = categoryInfo[category?.toLowerCase()] || categoryInfo.other;
   const Icon = info.icon;
-  
+
   // Special styling for summary card
   const isSummary = category?.toLowerCase() === 'summary';
 
@@ -33,22 +33,22 @@ export default function NutritionCard({ food }) {
               <h3 className="font-bold text-lg text-white">{name}</h3>
               <p className="text-sm text-white/90 flex items-center gap-1">
                 <Flame className="w-4 h-4" />
-                {calories} קלוריות
+                {Number(calories).toFixed(1)} קלוריות
               </p>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div>
               <p className="text-sm text-white/80">חלבון</p>
-              <p className="font-semibold text-white">{protein || 0}g</p>
+              <p className="font-semibold text-white">{Number(protein || 0).toFixed(1)}g</p>
             </div>
             <div>
               <p className="text-sm text-white/80">פחמימות</p>
-              <p className="font-semibold text-white">{carbs || 0}g</p>
+              <p className="font-semibold text-white">{Number(carbs || 0).toFixed(1)}g</p>
             </div>
             <div>
               <p className="text-sm text-white/80">שומן</p>
-              <p className="font-semibold text-white">{fat || 0}g</p>
+              <p className="font-semibold text-white">{Number(fat || 0).toFixed(1)}g</p>
             </div>
           </div>
         </CardContent>
@@ -67,23 +67,23 @@ export default function NutritionCard({ food }) {
           <div className="flex-1">
             <h3 className="font-bold text-lg text-gray-800">{name}</h3>
             <p className="text-sm text-gray-600 flex items-center gap-1">
-                <Flame className="w-4 h-4 text-orange-500" />
-                {calories} קלוריות
+              <Flame className="w-4 h-4 text-orange-500" />
+              {Number(calories).toFixed(1)} קלוריות
             </p>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div>
             <p className="text-sm text-gray-500">חלבון</p>
-            <p className="font-semibold text-gray-700">{protein || 0}g</p>
+            <p className="font-semibold text-gray-700">{Number(protein || 0).toFixed(1)}g</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">פחמימות</p>
-            <p className="font-semibold text-gray-700">{carbs || 0}g</p>
+            <p className="font-semibold text-gray-700">{Number(carbs || 0).toFixed(1)}g</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">שומן</p>
-            <p className="font-semibold text-gray-700">{fat || 0}g</p>
+            <p className="font-semibold text-gray-700">{Number(fat || 0).toFixed(1)}g</p>
           </div>
         </div>
       </CardContent>
