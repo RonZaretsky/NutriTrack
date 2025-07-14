@@ -16,12 +16,14 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { User as UserIcon, Edit, Save, Target, Activity, Flame, Ruler, Scale, Calendar, CheckCircle, TrendingUp, TrendingDown, Info, BrainCircuit, HeartHandshake, UserX } from 'lucide-react';
+import { User as UserIcon, Edit, Save, Target, Activity, Flame, Ruler, Scale, Calendar, CheckCircle, TrendingUp, TrendingDown, Info, BrainCircuit, HeartHandshake, UserX, LogOut } from 'lucide-react';
 import { logEvent } from '@/components/utils/logger';
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProfileSummary({ user, userProfile, onEditGoals, onProfileUpdate }) {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const [isEditingName, setIsEditingName] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [isExplanationModalOpen, setIsExplanationModalOpen] = useState(false);
@@ -300,13 +302,22 @@ export default function ProfileSummary({ user, userProfile, onEditGoals, onProfi
           </CardContent>
         </Card>
 
-        <div className="text-center pt-4">
+        <div className="text-center pt-4 flex flex-col items-center gap-2">
           <Button
             size="lg"
             onClick={onEditGoals}
-            className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white shadow-lg"
+            className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white shadow-lg min-w-[220px]"
           >
             הגדר מטרות מחדש
+          </Button>
+          <Button
+            variant="destructive"
+            size="lg"
+            className="min-w-[220px] flex items-center justify-center gap-2"
+            onClick={signOut}
+          >
+            <LogOut className="w-5 h-5 ml-2" />
+            התנתק
           </Button>
         </div>
       </div>
